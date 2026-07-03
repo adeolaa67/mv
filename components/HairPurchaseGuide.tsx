@@ -1,0 +1,30 @@
+import { PurchaseStep } from "@/lib/types";
+
+type HairPurchaseGuideProps = {
+  steps: PurchaseStep[];
+};
+
+export default function HairPurchaseGuide({ steps }: HairPurchaseGuideProps) {
+  return (
+    <section className="px-6 pb-14">
+      <hr className="mx-auto mb-14 max-w-xs border-hairline" />
+
+      <h2 className="text-center font-display text-xl md:text-2xl tracking-wide uppercase leading-snug">
+        Purchasing Our Virgin Human
+        <br />
+        Hair Extensions
+      </h2>
+
+      <div className="mx-auto mt-10 grid max-w-4xl gap-6 md:grid-cols-3">
+        {steps.map((step) => (
+          <div key={step.title} className="border border-hairline px-6 py-7 text-center">
+            <p className="text-xs font-semibold uppercase tracking-widest text-ink/70">
+              {step.title}
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-ink/75">{step.body}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
