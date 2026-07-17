@@ -3,10 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --color-cream: #f3efe7;
-  --color-ink: #201c16;
-  --color-hairline: #cdc2ac;
-  --color-bronze: #8a7150;
+  /* Space-separated RGB channels (not hex) so Tailwind can inject an alpha
+     channel for opacity modifiers like bg-ink/80 — see tailwind.config.ts. */
+  --color-cream: 243 239 231;
+  --color-ink: 32 28 22;
+  --color-hairline: 205 194 172;
+  --color-bronze: 138 113 80;
 }
 
 html {
@@ -23,6 +25,17 @@ body {
 
 .font-script {
   font-family: var(--font-script);
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
 }
 
 @media (prefers-reduced-motion: reduce) {

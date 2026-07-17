@@ -8,10 +8,10 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        cream: "var(--color-cream)",
-        ink: "var(--color-ink)",
-        hairline: "var(--color-hairline)",
-        bronze: "var(--color-bronze)",
+        cream: "rgb(var(--color-cream) / <alpha-value>)",
+        ink: "rgb(var(--color-ink) / <alpha-value>)",
+        hairline: "rgb(var(--color-hairline) / <alpha-value>)",
+        bronze: "rgb(var(--color-bronze) / <alpha-value>)",
       },
       fontFamily: {
         display: ["var(--font-display)"],

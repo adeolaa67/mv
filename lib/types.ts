@@ -23,6 +23,22 @@ export type PurchaseStep = {
 export type ServiceCategory = {
   slug: string;
   name: string;
+  options: string[];
+};
+
+export type GalleryReview = {
+  caption: string;
+  rating: number;
+  detail: string;
+};
+
+export type Service = {
+  name: string;
+  description: string;
+  care: string;
+  duration: string;
+  priceFrom: string;
+  categorySlug: string;
 };
 
 export type SiteContent = {
@@ -41,4 +57,6 @@ export type SiteContent = {
   policies: PolicyCard[];
   purchaseGuide: PurchaseStep[];
   categories: ServiceCategory[];
+  galleryReviews: Record<string, GalleryReview>;
+  services: Service[];
 };
