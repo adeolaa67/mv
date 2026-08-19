@@ -11,6 +11,7 @@ const SLOTS = ["9:00am", "10:00am", "11:00am", "12:00pm", "1:00pm", "2:00pm", "3
 type BookingCalendarProps = {
   id?: string;
   unavailableDates: string[];
+  bookedSlotsByDate: Record<string, string[]>;
   categories: ServiceCategory[];
 };
 
@@ -25,7 +26,12 @@ function fromISODate(iso: string) {
   return new Date(y, m - 1, d);
 }
 
-export default function BookingCalendar({ id, unavailableDates, categories }: BookingCalendarProps) {
+export default function BookingCalendar({
+  id,
+  unavailableDates,
+  bookedSlotsByDate,
+  categories,
+}: BookingCalendarProps) {
   const [viewDate, setViewDate] = useState(() => new Date());
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
   const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
@@ -37,6 +43,7 @@ export default function BookingCalendar({ id, unavailableDates, categories }: Bo
   const cardRef = useRef<HTMLDivElement>(null);
 
   const selectedCategory = categories.find((c) => c.slug === categorySlug);
+  const bookedSlotsForFocusedDate = focusedDate ? bookedSlotsByDate[focusedDate] ?? [] : [];
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -160,7 +167,7 @@ export default function BookingCalendar({ id, unavailableDates, categories }: Bo
 
         <div
           style={{ transformOrigin: zoomOrigin }}
-          className={`absolute inset-0 flex flex-col items-center justify-center px-6 transition-all duration-500 ease-out ${
+          className={`absolute inset-0 flex flex-col items-center overflow-y-auto px-6 py-8 transition-all duration-500 ease-out ${
             focusedDate ? "scale-100 opacity-100" : "pointer-events-none scale-0 opacity-0"
           }`}
         >
@@ -171,18 +178,26 @@ export default function BookingCalendar({ id, unavailableDates, categories }: Bo
               Available Slots
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {SLOTS.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => handleSelectSlot(s)}
-                  className={`border border-hairline py-2 text-sm transition-colors ${
-                    slot === s ? "bg-ink text-cream" : "hover:bg-ink/10"
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
+              {SLOTS.map((s) => {
+                const isTaken = bookedSlotsForFocusedDate.includes(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={isTaken}
+                    onClick={() => handleSelectSlot(s)}
+                    className={`border border-hairline py-2 text-sm transition-colors ${
+                      isTaken
+                        ? "cursor-not-allowed text-ink/25 line-through"
+                        : slot === s
+                          ? "bg-ink text-cream"
+                          : "hover:bg-ink/10"
+                    }`}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
             </div>
 
             {slot && !booked && (

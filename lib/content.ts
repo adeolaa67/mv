@@ -2,14 +2,15 @@ import { SiteContent } from "./types";
 
 export const siteContent: SiteContent = {
   brand: {
-    name: "By Ade Bless",
+    name: "By Adebless",
     tagline: "Hairstylist",
-    location: "Selly Oak, Dagenham",
+    location: "Dagenham",
   },
   stylist: {
     greetingName: "Adeola",
     bio: "Hello, my name is Adeola. I am a Luxury Extensions Specialist. Please ensure you read all the information provided below before booking. Thank you for choosing me to be your stylist. I can't wait to slay you!",
     avatarInitials: "A",
+    avatarSrc: "/stylist/adeola.png",
   },
   hours: [
     { label: "Mon – Fri", time: "9am – 5pm" },
@@ -60,24 +61,29 @@ export const siteContent: SiteContent = {
   ],
   categories: [
     {
-      slug: "hair-provided-packages",
-      name: "Hair Provided Packages",
-      options: ["Straight Bundle", "Body Wave Bundle", "Deep Wave Bundle", "Closure Included", "Frontal Included"],
+      slug: "premade-frontal-installation",
+      name: "Pre-made Frontal installation",
+      options: ["Pre-made Frontal installation"],
     },
     {
-      slug: "hybrid-installations",
-      name: "Hybrid Installations",
-      options: ["Sew-In + Tape Hybrid", "Closure Hybrid", "Frontal Hybrid"],
+      slug: "premade-closure-installation",
+      name: "Pre-made Closure installation",
+      options: ["Pre-made Closure installation"],
     },
     {
-      slug: "sew-ins",
-      name: "Sew Ins",
-      options: ["Full Sew-In", "Partial Sew-In", "Closure Sew-In", "Frontal Sew-In"],
+      slug: "re-install",
+      name: "Re-install",
+      options: ["Re-install"],
     },
     {
-      slug: "tape-ins",
-      name: "Tape-Ins",
-      options: ["Full Head Tape-In", "Half Head Tape-In", "Tape-In Refresh / Move-Up"],
+      slug: "frontal-ponytail",
+      name: "Frontal Ponytail",
+      options: ["Frontal Ponytail"],
+    },
+    {
+      slug: "customisation",
+      name: "Customisation",
+      options: ["Customisation"],
     },
   ],
   galleryReviews: {

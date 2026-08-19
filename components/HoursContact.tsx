@@ -17,7 +17,7 @@ export default function HoursContact({ hours, contact }: HoursContactProps) {
   return (
     <section className="px-6 pb-16">
       <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
-        <div className="border border-hairline px-8 py-10 text-center">
+        <div className="card-alive border border-hairline px-8 py-10 text-center">
           <h3 className="font-script text-3xl text-bronze">Hours</h3>
           <ul className="mt-6 space-y-4">
             {hours.map((row) => (
@@ -27,16 +27,17 @@ export default function HoursContact({ hours, contact }: HoursContactProps) {
               </li>
             ))}
           </ul>
+          <span aria-hidden className="card-alive-bar" />
         </div>
 
-        <div className="border border-hairline px-8 py-10 text-center">
+        <div className="card-alive border border-hairline px-8 py-10 text-center">
           <h3 className="font-script text-3xl text-bronze">Contact</h3>
           <ul className="mt-6 space-y-4 text-left inline-flex flex-col mx-auto">
             {contact.map((row) => {
               const Icon = contactIcons[row.icon];
               return (
                 <li key={row.label} className="flex items-center gap-3">
-                  <Icon />
+                  <Icon className="icon-float" />
                   <a
                     href={row.href}
                     className="text-sm tracking-wide text-ink/85 hover:text-bronze transition-colors"
@@ -47,6 +48,7 @@ export default function HoursContact({ hours, contact }: HoursContactProps) {
               );
             })}
           </ul>
+          <span aria-hidden className="card-alive-bar" />
         </div>
       </div>
     </section>

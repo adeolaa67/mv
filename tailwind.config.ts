@@ -12,6 +12,8 @@ const config: Config = {
         ink: "rgb(var(--color-ink) / <alpha-value>)",
         hairline: "rgb(var(--color-hairline) / <alpha-value>)",
         bronze: "rgb(var(--color-bronze) / <alpha-value>)",
+        taupe: "rgb(var(--color-taupe) / <alpha-value>)",
+        sand: "rgb(var(--color-sand) / <alpha-value>)",
       },
       fontFamily: {
         display: ["var(--font-display)"],

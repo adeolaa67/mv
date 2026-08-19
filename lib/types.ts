@@ -51,6 +51,7 @@ export type SiteContent = {
     greetingName: string;
     bio: string;
     avatarInitials: string;
+    avatarSrc?: string;
   };
   hours: HoursRow[];
   contact: ContactRow[];
@@ -59,4 +60,32 @@ export type SiteContent = {
   categories: ServiceCategory[];
   galleryReviews: Record<string, GalleryReview>;
   services: Service[];
+};
+
+// Admin-editable text overlaid on top of the lib/content.ts defaults. Arrays
+// are only applied when their length matches the corresponding default array
+// (edits are per-item text changes, not structural additions/removals).
+export type SiteContentOverrides = {
+  brand?: {
+    tagline?: string;
+    location?: string;
+  };
+  stylist?: {
+    bio?: string;
+  };
+  hours?: HoursRow[];
+  contact?: { label: string }[];
+  policies?: { title: string; body: string }[];
+  purchaseGuide?: PurchaseStep[];
+  services?: {
+    name: string;
+    description: string;
+    care: string;
+    duration: string;
+    priceFrom: string;
+  }[];
+};
+
+export type BookingSlotsSettings = {
+  slots: string[];
 };

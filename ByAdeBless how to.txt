@@ -1,0 +1,30 @@
+ByAdeBless
+
+What has been built
+ - Frontend (You can see how the project will look to the end user)
+ - Mocked up the content. To adjust content go to lib/content.ts
+
+What Needs to be built
+ - Because the availability is a mockup, you will need to link it to your firebase firestore
+ - Set up an admin side that allows you to book when you are busy
+ - Fetch that information and block out your schedule on the calendar
+ - Bookings go into a separate folder
+ - Admin side can see bookings
+ - Set up stripe payments
+ - Handle secure transactions that only push to firebase on success
+ - Setup email confirmation
+
+How
+ - Copy the 'what has been built' and 'what needs to be built' into any A.I and ask it to build you an .md file
+ - Upload the repo into Claude as a Project. Upload the .md file and tell it to build out your project in this order
+	-Admin page
+	- Login with a fixed login of your choosing
+	- Upon login, go to a dashboard
+	- Populate the dashboard with a calendar you can block out
+	- Fetch that information into the calendar  on the userside frontend
+	- Get a Stripe Account
+	- Link the API
+	- (If you're ambitious) set up payment link
+	- (Ambitious) set up email confirmation
+	- Take those bookings and opulate the bookings table in firestore
+	- Setup cancellation, receipts etc.

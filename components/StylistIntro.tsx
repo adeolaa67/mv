@@ -1,10 +1,13 @@
+import Image from "next/image";
+
 type StylistIntroProps = {
   name: string;
   bio: string;
   avatarInitials: string;
+  avatarSrc?: string;
 };
 
-export default function StylistIntro({ name, bio, avatarInitials }: StylistIntroProps) {
+export default function StylistIntro({ name, bio, avatarInitials, avatarSrc }: StylistIntroProps) {
   return (
     <section className="px-6 pb-14">
       <div className="mx-auto max-w-2xl border border-hairline px-6 py-10 md:px-10">
@@ -17,12 +20,22 @@ export default function StylistIntro({ name, bio, avatarInitials }: StylistIntro
             {bio}
           </p>
 
-          <div
-            aria-hidden
-            className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full border border-hairline bg-ink/5 font-display text-3xl text-bronze"
-          >
-            {avatarInitials}
-          </div>
+          {avatarSrc ? (
+            <Image
+              src={avatarSrc}
+              alt={name}
+              width={112}
+              height={112}
+              className="h-28 w-28 shrink-0 rounded-full border border-hairline object-cover"
+            />
+          ) : (
+            <div
+              aria-hidden
+              className="flex h-28 w-28 shrink-0 items-center justify-center rounded-full border border-hairline bg-ink/5 font-display text-3xl text-bronze"
+            >
+              {avatarInitials}
+            </div>
+          )}
         </div>
       </div>
     </section>

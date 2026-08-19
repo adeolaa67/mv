@@ -21,8 +21,8 @@ const script = Mea_Culpa({
 });
 
 export const metadata: Metadata = {
-  title: "MV Hair UK | Book an Appointment",
-  description: "Book your appointment with Victoria, Luxury Extensions Specialist in Selly Oak, Birmingham.",
+  title: "By Adebless | Book an Appointment",
+  description: "Book your appointment with Adeola, Luxury Extensions Specialist in Dagenham.",
 };
 
 export default function RootLayout({

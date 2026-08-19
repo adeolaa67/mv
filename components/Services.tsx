@@ -65,11 +65,11 @@ export default function Services({ services, categories, images, moreHref }: Ser
           role="dialog"
           aria-modal="true"
           onClick={() => setActive(null)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-ink/80 px-6"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/80 px-6 py-10 sm:items-center"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md bg-cream px-6 py-8 text-center"
+            className="relative max-h-full w-full max-w-md overflow-y-auto bg-cream px-6 py-8 text-center"
           >
             <button
               type="button"
@@ -116,6 +116,14 @@ export default function Services({ services, categories, images, moreHref }: Ser
                 </ul>
               </>
             )}
+
+            <a
+              href={moreHref}
+              onClick={() => setActive(null)}
+              className="mt-8 flex items-center justify-center bg-ink py-3 text-xs tracking-[0.3em] uppercase text-cream transition-colors hover:bg-bronze"
+            >
+              Book This Service
+            </a>
           </div>
         </div>
       )}

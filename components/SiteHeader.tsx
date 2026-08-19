@@ -10,7 +10,7 @@ export default function SiteHeader({ name, tagline, location }: SiteHeaderProps)
   return (
     <header className="flex flex-col items-center gap-6 pt-16 pb-10 px-6 text-center">
       <div>
-        <p className="font-display text-3xl md:text-4xl tracking-widest2 uppercase">
+        <p className="brand-name font-display text-5xl md:text-7xl font-bold tracking-widest2">
           {name}
         </p>
         <p className="mt-2 text-xs tracking-[0.4em] uppercase text-ink/70">

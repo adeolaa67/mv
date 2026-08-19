@@ -4,11 +4,16 @@
 
 :root {
   /* Space-separated RGB channels (not hex) so Tailwind can inject an alpha
-     channel for opacity modifiers like bg-ink/80 — see tailwind.config.ts. */
-  --color-cream: 243 239 231;
-  --color-ink: 32 28 22;
-  --color-hairline: 205 194 172;
-  --color-bronze: 138 113 80;
+     channel for opacity modifiers like bg-ink/80 — see tailwind.config.ts.
+     Palette: black + white as the base, with a warm brown-to-blush ramp
+     (#8b6c5c → #a08679 → #bca89f → #d8cbc4) carrying every accent, so the
+     whole site reads as one consistent gradient rather than mixed colors. */
+  --color-cream: 255 255 255;
+  --color-ink: 0 0 0;
+  --color-hairline: 216 203 196; /* #d8cbc4 */
+  --color-bronze: 139 108 92; /* #8b6c5c */
+  --color-taupe: 160 134 121; /* #a08679 */
+  --color-sand: 188 168 159; /* #bca89f */
 }
 
 html {
@@ -25,6 +30,129 @@ body {
 
 .font-script {
   font-family: var(--font-script);
+}
+
+/* "Alive" info boxes (policies, purchase guide, hours/contact): a soft
+   warm-tone gradient fades in and the card lifts on hover/focus, with a
+   gradient accent bar sweeping in underneath — gives the flat bordered
+   boxes some life without breaking the site's minimal editorial look. */
+.card-alive {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+.card-alive::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-bronze) / 0.1),
+    rgb(var(--color-taupe) / 0.1),
+    rgb(var(--color-sand) / 0.14)
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.card-alive:hover,
+.card-alive:focus-within {
+  transform: translateY(-6px);
+  border-color: rgb(var(--color-bronze) / 0.6);
+  box-shadow: 0 24px 40px -28px rgb(var(--color-ink) / 0.35);
+}
+
+.card-alive:hover::before,
+.card-alive:focus-within::before {
+  opacity: 1;
+}
+
+.card-alive > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card-alive-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    rgb(var(--color-bronze)),
+    rgb(var(--color-taupe)),
+    rgb(var(--color-sand))
+  );
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s ease;
+}
+
+.card-alive:hover .card-alive-bar,
+.card-alive:focus-within .card-alive-bar {
+  transform: scaleX(1);
+}
+
+@keyframes gentle-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.icon-float {
+  display: inline-flex;
+  animation: gentle-float 3.4s ease-in-out infinite;
+}
+
+.card-alive:hover .icon-float,
+.card-alive:focus-within .icon-float {
+  animation-duration: 1.6s;
+}
+
+/* Brand name (site header): a slow bronze-to-sand shimmer sweeps across the
+   text and the whole mark breathes gently — reads as alive/premium rather
+   than a static logotype, without ever feeling like a flashy animation. */
+.brand-name {
+  background: linear-gradient(
+    100deg,
+    rgb(var(--color-bronze)) 0%,
+    rgb(var(--color-taupe)) 30%,
+    rgb(var(--color-sand)) 50%,
+    rgb(var(--color-taupe)) 70%,
+    rgb(var(--color-bronze)) 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+  animation: brand-shimmer 8s ease-in-out infinite, brand-breathe 6s ease-in-out infinite;
+}
+
+@keyframes brand-shimmer {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes brand-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
 }
 
 @keyframes shake {
