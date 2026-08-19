@@ -2,6 +2,7 @@ import { siteContent } from "@/lib/content";
 import { getGalleryImages } from "@/lib/gallery";
 import { getServiceImages } from "@/lib/services";
 import { getUnavailableDates, getBookedSlotsByDate } from "@/lib/availability";
+import { getServicePrices } from "@/lib/prices";
 import SiteHeader from "@/components/SiteHeader";
 import StylistIntro from "@/components/StylistIntro";
 import Gallery from "@/components/Gallery";
@@ -23,6 +24,7 @@ export default async function Home() {
   const serviceImages = getServiceImages();
   const unavailableDates = await getUnavailableDates();
   const bookedSlotsByDate = await getBookedSlotsByDate();
+  const pricesPence = await getServicePrices();
 
   return (
     <main className="min-h-screen bg-cream">
@@ -35,7 +37,13 @@ export default async function Home() {
       />
       <Gallery images={galleryImages} reviews={galleryReviews} />
       <BookingPolicies policies={policies} />
-      <Services services={services} categories={categories} images={serviceImages} moreHref="#calendar" />
+      <Services
+        services={services}
+        categories={categories}
+        images={serviceImages}
+        moreHref="#calendar"
+        pricesPence={pricesPence}
+      />
       <HairPurchaseGuide steps={purchaseGuide} />
       <CtaBanner label="Choose your appointment below" href="#calendar" />
       <BookingCalendar
@@ -43,6 +51,7 @@ export default async function Home() {
         unavailableDates={unavailableDates}
         bookedSlotsByDate={bookedSlotsByDate}
         categories={categories}
+        pricesPence={pricesPence}
       />
       <HoursContact hours={hours} contact={contact} />
     </main>

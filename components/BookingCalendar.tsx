@@ -12,6 +12,7 @@ type BookingCalendarProps = {
   unavailableDates: string[];
   bookedSlotsByDate: Record<string, string[]>;
   categories: ServiceCategory[];
+  pricesPence: Record<string, number>;
 };
 
 function toISODate(date: Date) {
@@ -30,6 +31,7 @@ export default function BookingCalendar({
   unavailableDates,
   bookedSlotsByDate,
   categories,
+  pricesPence,
 }: BookingCalendarProps) {
   const [viewDate, setViewDate] = useState(() => new Date());
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export default function BookingCalendar({
   const cardRef = useRef<HTMLDivElement>(null);
 
   const selectedCategory = categories.find((c) => c.slug === categorySlug);
+  const selectedPricePence = selectedCategory ? pricesPence[selectedCategory.slug] : undefined;
   const bookedSlotsForFocusedDate = focusedDate ? bookedSlotsByDate[focusedDate] ?? [] : [];
 
   const year = viewDate.getFullYear();
@@ -307,12 +310,19 @@ export default function BookingCalendar({
                   </>
                 )}
 
+                {subOption && !selectedPricePence && (
+                  <p className="text-sm text-ink/60">
+                    Pricing for this service isn&apos;t set up yet — please contact us directly to book.
+                  </p>
+                )}
+
                 {error && <p className="text-sm text-red-700">{error}</p>}
 
                 <button
                   type="button"
                   disabled={
                     !subOption ||
+                    !selectedPricePence ||
                     !customerName.trim() ||
                     !customerEmail.trim() ||
                     !customerPhone.trim() ||
@@ -321,7 +331,11 @@ export default function BookingCalendar({
                   onClick={handleBook}
                   className="w-full border border-hairline py-2 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
                 >
-                  {submitting ? "Redirecting to payment…" : "Book — pay £10 deposit"}
+                  {submitting
+                    ? "Redirecting to payment…"
+                    : selectedPricePence
+                      ? `Book — pay £${(selectedPricePence / 100).toFixed(2)}`
+                      : "Book"}
                 </button>
               </div>
             )}

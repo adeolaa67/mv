@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       customerName: metadata.customerName ?? "",
       customerEmail: metadata.customerEmail ?? "",
       customerPhone: metadata.customerPhone ?? "",
-      priceFrom: "£10 deposit",
+      priceFrom: `£${((session.amount_total ?? 0) / 100).toFixed(2)}`,
       status: "confirmed",
       stripeSessionId: session.id,
       stripePaymentIntentId:
@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
         subOption: metadata.subOption ?? "",
         customerName: metadata.customerName ?? "",
         customerEmail: metadata.customerEmail ?? "",
+        amountPence: session.amount_total ?? 0,
       });
     } catch (error) {
       // The booking is already confirmed in Firestore at this point — an

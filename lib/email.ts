@@ -31,6 +31,7 @@ type BookingConfirmation = {
   subOption: string;
   customerName: string;
   customerEmail: string;
+  amountPence: number;
 };
 
 // Called from the webhook handler after the Firestore write succeeds. Errors
@@ -44,12 +45,13 @@ export async function sendBookingConfirmationEmails(booking: BookingConfirmation
     siteContent.categories.find((c) => c.slug === booking.categorySlug)?.name ?? booking.categorySlug;
 
   const summary = `${booking.subOption} (${categoryName}) on ${booking.date} at ${booking.slot}`;
+  const amount = `£${(booking.amountPence / 100).toFixed(2)}`;
 
   await resend.emails.send({
     from,
     to: booking.customerEmail,
     subject: `Booking confirmed — ${booking.date} at ${booking.slot}`,
-    text: `Hi ${booking.customerName},\n\nYour £10 deposit has gone through and your appointment is booked:\n\n${summary}\n\nThe remaining balance is due in cash or by bank transfer on the day. See you then!\n\n— ${siteContent.brand.name}`,
+    text: `Hi ${booking.customerName},\n\nYour payment of ${amount} has gone through and your appointment is booked and paid in full:\n\n${summary}\n\nSee you then!\n\n— ${siteContent.brand.name}`,
   });
 
   const adminEmail = getAdminEmail();

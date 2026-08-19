@@ -1,5 +1,7 @@
 import LogoutButton from "@/components/admin/LogoutButton";
 import BlockOutCalendar from "@/components/admin/BlockOutCalendar";
+import PriceEditor from "@/components/admin/PriceEditor";
+import { siteContent } from "@/lib/content";
 
 export default function AdminDashboardPage() {
   return (
@@ -15,6 +17,14 @@ export default function AdminDashboardPage() {
 
       <div className="mx-auto mt-8 max-w-2xl">
         <BlockOutCalendar />
+      </div>
+
+      <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
+        Set the price for each service — customers pay this full amount online
+        when they book. A service with no price set can't be booked online yet.
+      </p>
+      <div className="mx-auto mt-4 max-w-2xl">
+        <PriceEditor categories={siteContent.categories} />
       </div>
 
       <p className="mx-auto mt-8 max-w-2xl text-xs text-ink/40">

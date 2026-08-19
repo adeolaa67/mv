@@ -27,12 +27,12 @@ export const siteContent: SiteContent = {
     {
       icon: "card",
       title: "Payment",
-      body: "All appointments require a £10 non-refundable deposit. The remainder must be paid via cash or bank transfer on the day of your appointment.",
+      body: "Full payment for your appointment is taken online by card at the time of booking.",
     },
     {
       icon: "clock",
       title: "Late Policy",
-      body: "If you are running late, please let us know! We have a 15 minute grace period. After 15 minutes you will be charged a £10 late fee. After 30 minutes, your appointment will be cancelled and your deposit will be forfeited.",
+      body: "If you are running late, please let us know! We have a 15 minute grace period. After 15 minutes you will be charged a £10 late fee. After 30 minutes, your appointment will be cancelled and your payment will be forfeited.",
     },
     {
       icon: "refund",

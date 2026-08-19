@@ -9,11 +9,13 @@ type ServicesProps = {
   categories: ServiceCategory[];
   images: string[];
   moreHref: string;
+  pricesPence: Record<string, number>;
 };
 
-export default function Services({ services, categories, images, moreHref }: ServicesProps) {
+export default function Services({ services, categories, images, moreHref, pricesPence }: ServicesProps) {
   const [active, setActive] = useState<number | null>(null);
   const activeService = active !== null ? services[active] : null;
+  const activePricePence = activeService ? pricesPence[activeService.categorySlug] : undefined;
   const relatedOptions = activeService
     ? categories.find((c) => c.slug === activeService.categorySlug)?.options.filter(
         (o) => o !== activeService.name,
@@ -89,8 +91,10 @@ export default function Services({ services, categories, images, moreHref }: Ser
                 <p className="mt-1 font-display">{activeService.duration}</p>
               </div>
               <div>
-                <p className="text-xs uppercase tracking-widest text-ink/50">From</p>
-                <p className="mt-1 font-display">{activeService.priceFrom}</p>
+                <p className="text-xs uppercase tracking-widest text-ink/50">Price</p>
+                <p className="mt-1 font-display">
+                  {activePricePence ? `£${(activePricePence / 100).toFixed(2)}` : activeService.priceFrom}
+                </p>
               </div>
             </div>
 

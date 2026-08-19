@@ -3,15 +3,9 @@ import Stripe from "stripe";
 import { siteContent } from "@/lib/content";
 import { SLOTS } from "@/lib/slots";
 import { getAdminDb } from "@/lib/firebaseAdmin";
+import { getServicePrices } from "@/lib/prices";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
-
-// Policy (see lib/content.ts policies): all appointments require a £10
-// non-refundable deposit; the remainder is paid in cash/bank transfer on the
-// day. So Checkout only ever collects this fixed amount, never a per-service
-// price — the booking-flow `categories` don't map cleanly onto priced
-// `services` anyway (different taxonomies).
-const DEPOSIT_AMOUNT_PENCE = 1000;
 
 function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -55,9 +49,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Name, email, and phone are required." }, { status: 400 });
   }
 
+  const prices = await getServicePrices();
+  const pricePence = prices[category.slug];
+  if (!pricePence) {
+    return NextResponse.json(
+      { error: "Pricing isn't set up for this service yet — please contact us directly to book." },
+      { status: 409 },
+    );
+  }
+
   // Re-check availability server-side — the calendar's greyed-out slots are
   // just UI state from page load; without this, a stale tab or a direct API
-  // call could pay a deposit for a slot that's already blocked or taken.
+  // call could pay for a slot that's already blocked or taken.
   const db = getAdminDb();
   const [blockedDoc, bookingsSnapshot] = await Promise.all([
     db.collection("blockedDates").doc(date).get(),
@@ -80,10 +83,10 @@ export async function POST(request: NextRequest) {
           quantity: 1,
           price_data: {
             currency: "gbp",
-            unit_amount: DEPOSIT_AMOUNT_PENCE,
+            unit_amount: pricePence,
             product_data: {
-              name: `${subOption} — booking deposit`,
-              description: `${date} at ${slot}. Non-refundable deposit; remainder due on the day.`,
+              name: subOption,
+              description: `${date} at ${slot}. Paid in full.`,
             },
           },
         },
