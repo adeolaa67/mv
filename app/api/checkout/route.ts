@@ -6,12 +6,12 @@ import { getAdminDb } from "@/lib/firebaseAdmin";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-// Policy (see lib/content.ts policies): all appointments require a £20
+// Policy (see lib/content.ts policies): all appointments require a £10
 // non-refundable deposit; the remainder is paid in cash/bank transfer on the
 // day. So Checkout only ever collects this fixed amount, never a per-service
 // price — the booking-flow `categories` don't map cleanly onto priced
 // `services` anyway (different taxonomies).
-const DEPOSIT_AMOUNT_PENCE = 2000;
+const DEPOSIT_AMOUNT_PENCE = 1000;
 
 function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY;

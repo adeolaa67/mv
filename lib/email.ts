@@ -49,7 +49,7 @@ export async function sendBookingConfirmationEmails(booking: BookingConfirmation
     from,
     to: booking.customerEmail,
     subject: `Booking confirmed — ${booking.date} at ${booking.slot}`,
-    text: `Hi ${booking.customerName},\n\nYour £20 deposit has gone through and your appointment is booked:\n\n${summary}\n\nThe remaining balance is due in cash or by bank transfer on the day. See you then!\n\n— ${siteContent.brand.name}`,
+    text: `Hi ${booking.customerName},\n\nYour £10 deposit has gone through and your appointment is booked:\n\n${summary}\n\nThe remaining balance is due in cash or by bank transfer on the day. See you then!\n\n— ${siteContent.brand.name}`,
   });
 
   const adminEmail = getAdminEmail();

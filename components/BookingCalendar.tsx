@@ -321,7 +321,7 @@ export default function BookingCalendar({
                   onClick={handleBook}
                   className="w-full border border-hairline py-2 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
                 >
-                  {submitting ? "Redirecting to payment…" : "Book — pay £20 deposit"}
+                  {submitting ? "Redirecting to payment…" : "Book — pay £10 deposit"}
                 </button>
               </div>
             )}

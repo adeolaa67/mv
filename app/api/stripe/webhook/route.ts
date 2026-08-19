@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       customerName: metadata.customerName ?? "",
       customerEmail: metadata.customerEmail ?? "",
       customerPhone: metadata.customerPhone ?? "",
-      priceFrom: "£20 deposit",
+      priceFrom: "£10 deposit",
       status: "confirmed",
       stripeSessionId: session.id,
       stripePaymentIntentId:
