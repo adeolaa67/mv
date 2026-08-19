@@ -26,13 +26,13 @@ export default function Services({ services, categories, images, moreHref }: Ser
         Services
       </h2>
 
-      <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="mx-auto mt-10 flex max-w-3xl flex-wrap justify-center gap-4">
         {services.map((service, i) => (
           <button
             key={service.name}
             type="button"
             onClick={() => setActive(i)}
-            className="border border-hairline text-center transition-colors hover:bg-ink/5"
+            className="w-[calc(50%-0.5rem)] border border-hairline text-center transition-colors hover:bg-ink/5 sm:w-[calc(25%-0.75rem)]"
           >
             {images[i] && (
               <div className="h-28 w-full overflow-hidden">
