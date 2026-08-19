@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebaseAdmin";
+import { sendBookingConfirmationEmails } from "@/lib/email";
 
 function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -46,31 +47,53 @@ export async function POST(request: NextRequest) {
 
   // Doc ID is the Stripe session ID (not autoId) so redelivery of the same
   // event — which Stripe does — overwrites the same doc instead of creating
-  // a second booking for one payment.
-  await getAdminDb()
-    .collection("bookings")
-    .doc(session.id)
-    .set(
-      {
+  // a second booking for one payment. The pre-write existence check is what
+  // stops a redelivery from also sending the customer a second confirmation
+  // email, since the write itself is naturally idempotent but the email
+  // side effect isn't.
+  const docRef = getAdminDb().collection("bookings").doc(session.id);
+  const alreadyExisted = (await docRef.get()).exists;
+
+  await docRef.set(
+    {
+      date: metadata.date,
+      slot: metadata.slot,
+      categorySlug: metadata.categorySlug ?? "",
+      subOption: metadata.subOption ?? "",
+      customerName: metadata.customerName ?? "",
+      customerEmail: metadata.customerEmail ?? "",
+      customerPhone: metadata.customerPhone ?? "",
+      priceFrom: "£20 deposit",
+      status: "confirmed",
+      stripeSessionId: session.id,
+      stripePaymentIntentId:
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent?.id ?? ""),
+      createdAt: new Date(),
+      cancelledAt: null,
+    },
+    { merge: true },
+  );
+
+  if (!alreadyExisted) {
+    try {
+      await sendBookingConfirmationEmails({
         date: metadata.date,
         slot: metadata.slot,
         categorySlug: metadata.categorySlug ?? "",
         subOption: metadata.subOption ?? "",
         customerName: metadata.customerName ?? "",
         customerEmail: metadata.customerEmail ?? "",
-        customerPhone: metadata.customerPhone ?? "",
-        priceFrom: "£20 deposit",
-        status: "confirmed",
-        stripeSessionId: session.id,
-        stripePaymentIntentId:
-          typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : (session.payment_intent?.id ?? ""),
-        createdAt: new Date(),
-        cancelledAt: null,
-      },
-      { merge: true },
-    );
+      });
+    } catch (error) {
+      // The booking is already confirmed in Firestore at this point — an
+      // email provider hiccup shouldn't turn a successful payment into a
+      // failed webhook that Stripe retries (which would just re-attempt the
+      // same already-idempotent write, but with a broken email 100% of the time).
+      console.error("Failed to send booking confirmation emails:", error);
+    }
+  }
 
   return NextResponse.json({ received: true });
 }
