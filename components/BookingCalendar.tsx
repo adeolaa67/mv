@@ -3,10 +3,9 @@
 import { useRef, useState } from "react";
 import { CalendarIcon } from "./icons";
 import { ServiceCategory } from "@/lib/types";
+import { SLOTS } from "@/lib/slots";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
-// Hourly slots 9am–5pm — each entry is the start of an hour-long slot.
-const SLOTS = ["9:00am", "10:00am", "11:00am", "12:00pm", "1:00pm", "2:00pm", "3:00pm", "4:00pm"];
 
 type BookingCalendarProps = {
   id?: string;
@@ -39,7 +38,11 @@ export default function BookingCalendar({
   const [slot, setSlot] = useState<string | null>(null);
   const [categorySlug, setCategorySlug] = useState("");
   const [subOption, setSubOption] = useState("");
-  const [booked, setBooked] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const selectedCategory = categories.find((c) => c.slug === categorySlug);
@@ -74,7 +77,7 @@ export default function BookingCalendar({
     setSlot(null);
     setCategorySlug("");
     setSubOption("");
-    setBooked(false);
+    setError(null);
     setFocusedDate(iso);
   }
 
@@ -83,14 +86,14 @@ export default function BookingCalendar({
     setSlot(null);
     setCategorySlug("");
     setSubOption("");
-    setBooked(false);
+    setError(null);
   }
 
   function handleSelectSlot(s: string) {
     setSlot(s);
     setCategorySlug("");
     setSubOption("");
-    setBooked(false);
+    setError(null);
   }
 
   function handleSelectCategory(slug: string) {
@@ -98,8 +101,37 @@ export default function BookingCalendar({
     setSubOption("");
   }
 
-  function handleBook() {
-    setBooked(true);
+  async function handleBook() {
+    if (!focusedDate || !slot || !categorySlug || !subOption) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: focusedDate,
+          slot,
+          categorySlug,
+          subOption,
+          customerName,
+          customerEmail,
+          customerPhone,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setError(data.error ?? "Something went wrong — please try again.");
+        setSubmitting(false);
+        return;
+      }
+      // Leaving the page for Stripe Checkout — no need to clear `submitting`,
+      // this component is about to unmount.
+      window.location.href = data.url;
+    } catch {
+      setError("Something went wrong — please try again.");
+      setSubmitting(false);
+    }
   }
 
   const focusedDay = focusedDate ? fromISODate(focusedDate).getDate() : null;
@@ -200,7 +232,7 @@ export default function BookingCalendar({
               })}
             </div>
 
-            {slot && !booked && (
+            {slot && (
               <div className="mt-5 space-y-3 text-left">
                 <label className="block">
                   <span className="text-xs uppercase tracking-widest text-ink/60">Category</span>
@@ -240,21 +272,58 @@ export default function BookingCalendar({
                   </label>
                 )}
 
+                {subOption && (
+                  <>
+                    <label className="block">
+                      <span className="text-xs uppercase tracking-widest text-ink/60">Name</span>
+                      <input
+                        type="text"
+                        name="customerName"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs uppercase tracking-widest text-ink/60">Email</span>
+                      <input
+                        type="email"
+                        name="customerEmail"
+                        value={customerEmail}
+                        onChange={(e) => setCustomerEmail(e.target.value)}
+                        className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs uppercase tracking-widest text-ink/60">Phone</span>
+                      <input
+                        type="tel"
+                        name="customerPhone"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                      />
+                    </label>
+                  </>
+                )}
+
+                {error && <p className="text-sm text-red-700">{error}</p>}
+
                 <button
                   type="button"
-                  disabled={!subOption}
+                  disabled={
+                    !subOption ||
+                    !customerName.trim() ||
+                    !customerEmail.trim() ||
+                    !customerPhone.trim() ||
+                    submitting
+                  }
                   onClick={handleBook}
                   className="w-full border border-hairline py-2 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
                 >
-                  Book
+                  {submitting ? "Redirecting to payment…" : "Book — pay £20 deposit"}
                 </button>
               </div>
-            )}
-
-            {booked && (
-              <p className="mt-4 text-center text-sm text-ink/70">
-                {subOption} booked for {slot} — booking submission is a mockup until Firebase is connected.
-              </p>
             )}
 
             <button
