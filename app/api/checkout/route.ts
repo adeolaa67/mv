@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { siteContent } from "@/lib/content";
-import { getBookingSlots } from "@/lib/slots";
+import { getEffectiveSlotsForDate } from "@/lib/slots";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { getServicePrices } from "@/lib/prices";
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   if (!date || !ISO_DATE.test(date)) {
     return NextResponse.json({ error: "date must be yyyy-mm-dd." }, { status: 400 });
   }
-  const validSlots = await getBookingSlots();
+  const validSlots = await getEffectiveSlotsForDate(date);
   if (!slot || !validSlots.includes(slot)) {
     return NextResponse.json({ error: "Invalid slot." }, { status: 400 });
   }

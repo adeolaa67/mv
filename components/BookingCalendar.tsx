@@ -13,6 +13,7 @@ type BookingCalendarProps = {
   categories: ServiceCategory[];
   pricesPence: Record<string, number>;
   slots: string[];
+  slotOverridesByDate: Record<string, string[]>;
 };
 
 function toISODate(date: Date) {
@@ -33,6 +34,7 @@ export default function BookingCalendar({
   categories,
   pricesPence,
   slots,
+  slotOverridesByDate,
 }: BookingCalendarProps) {
   const [viewDate, setViewDate] = useState(() => new Date());
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
@@ -51,6 +53,7 @@ export default function BookingCalendar({
   const selectedCategory = categories.find((c) => c.slug === categorySlug);
   const selectedPricePence = selectedCategory ? pricesPence[selectedCategory.slug] : undefined;
   const bookedSlotsForFocusedDate = focusedDate ? bookedSlotsByDate[focusedDate] ?? [] : [];
+  const slotsForFocusedDate = focusedDate ? slotOverridesByDate[focusedDate] ?? slots : slots;
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -214,7 +217,7 @@ export default function BookingCalendar({
               Available Slots
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {slots.map((s) => {
+              {slotsForFocusedDate.map((s) => {
                 const isTaken = bookedSlotsForFocusedDate.includes(s);
                 return (
                   <button

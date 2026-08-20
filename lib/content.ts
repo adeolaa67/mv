@@ -88,34 +88,34 @@ export const siteContent: SiteContent = {
   ],
   galleryReviews: {
     "01.jpg": {
-      caption: "Flawless finish, so natural!",
+      caption: "Lace melted right into my skin.",
       rating: 5,
-      detail: "I've had extensions done before but never this seamless. Adeola matched the texture perfectly and the install didn't feel heavy at all. Booking again next month.",
+      detail: "You genuinely could not tell it was a wig install. Adeola was so nice throughout, and the space itself was clean, comfortable, and welcoming.",
     },
     "02.jpg": {
-      caption: "Obsessed with this install.",
+      caption: "Still flawless 3 weeks later.",
       rating: 5,
-      detail: "From consultation to finish Adeola talked me through every step. The parting looks completely natural and it's held up beautifully two weeks on.",
+      detail: "My wig install lasted 3+ weeks with just a couple of minor touch-ups. Adeola gave me great advice on how to maintain it properly at home.",
     },
     "03.jpg": {
-      caption: "Best sew-in I've had.",
+      caption: "Best wig install I've had.",
       rating: 5,
-      detail: "Sat comfortably for the whole appointment and left with the neatest sew-in I've ever had. No pulling, no tension headaches — just a gorgeous result.",
+      detail: "Sat comfortably for the whole appointment in such a welcoming environment. No pulling, no tension — just a completely seamless, gorgeous result.",
     },
     "04.jpg": {
-      caption: "Quick, neat, and beautiful.",
+      caption: "So many compliments!",
       rating: 4,
-      detail: "Was in and out faster than expected without the finish feeling rushed. Only reason it's not five stars is I wish I'd booked a longer length!",
+      detail: "I lost count of how many people asked where I got my hair done. Adeola is lovely to be around too — really put me at ease.",
     },
     "05.jpg": {
       caption: "Adeola never disappoints.",
       rating: 5,
-      detail: "This is my fourth appointment and the quality is consistent every single time. Clean workspace, great communication, stunning results.",
+      detail: "This is my fourth appointment and the quality is consistent every single time. Clean, comfortable space and genuinely helpful advice on aftercare.",
     },
     "06.jpg": {
-      caption: "Perfect for the occasion.",
+      caption: "Undetectable lace, real confidence.",
       rating: 5,
-      detail: "Needed something special for a wedding and Adeola delivered exactly what I pictured. Got compliments all night — thank you!",
+      detail: "The lace melted onto my skin so well nobody could tell. Such a warm, welcoming atmosphere — I always leave with so many compliments.",
     },
   },
   services: [

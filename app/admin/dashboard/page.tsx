@@ -2,6 +2,7 @@ import LogoutButton from "@/components/admin/LogoutButton";
 import BlockOutCalendar from "@/components/admin/BlockOutCalendar";
 import PriceEditor from "@/components/admin/PriceEditor";
 import SlotsEditor from "@/components/admin/SlotsEditor";
+import DateSlotsEditor from "@/components/admin/DateSlotsEditor";
 import ContentEditor from "@/components/admin/ContentEditor";
 import ImageManager from "@/components/admin/ImageManager";
 import { siteContent } from "@/lib/content";
@@ -23,10 +24,18 @@ export default function AdminDashboardPage() {
       </div>
 
       <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
-        Set which times of day customers can book.
+        Set the default times of day customers can book, on any open day.
       </p>
       <div className="mx-auto mt-4 max-w-2xl">
         <SlotsEditor />
+      </div>
+
+      <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
+        Need different times on a specific day? Set custom times just for
+        that date here — it overrides the default above.
+      </p>
+      <div className="mx-auto mt-4 max-w-2xl">
+        <DateSlotsEditor />
       </div>
 
       <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">

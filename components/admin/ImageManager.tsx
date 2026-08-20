@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
 type GalleryEntry = { id: string; url: string; caption: string; rating: number; detail: string };
@@ -43,6 +43,45 @@ function resizeImageFile(file: File): Promise<Blob> {
   });
 }
 
+// A plain <input type="file"> is occasionally unresponsive to taps on mobile
+// browsers once it's been styled/shrunk (tiny native hit target, or a
+// touch-event quirk on some iOS/Android browser builds). A <label> wrapping
+// a visually-hidden input is the standard, most reliable cross-browser fix —
+// the whole label area becomes the tap target and forwards the click to the
+// input natively, no JS click-forwarding needed.
+function FileInputButton({
+  label,
+  disabled,
+  onSelect,
+}: {
+  label: string;
+  disabled?: boolean;
+  onSelect: (file: File) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  return (
+    <label
+      className={`inline-block cursor-pointer border border-hairline px-3 py-1.5 text-xs uppercase tracking-widest transition-colors ${
+        disabled ? "cursor-not-allowed opacity-40" : "hover:bg-ink hover:text-cream"
+      }`}
+    >
+      {label}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        disabled={disabled}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onSelect(file);
+          e.target.value = "";
+        }}
+        className="sr-only"
+      />
+    </label>
+  );
+}
+
 export default function ImageManager() {
   const [gallery, setGallery] = useState<GalleryEntry[]>([]);
   const [services, setServices] = useState<ServiceImage[]>([]);
@@ -50,10 +89,6 @@ export default function ImageManager() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-
-  const [newCaption, setNewCaption] = useState("");
-  const [newRating, setNewRating] = useState(5);
-  const [newDetail, setNewDetail] = useState("");
 
   async function load() {
     setLoading(true);
@@ -93,17 +128,6 @@ export default function ImageManager() {
     } finally {
       setBusy(null);
     }
-  }
-
-  async function handleAddGalleryPhoto(file: File) {
-    await uploadFile(
-      file,
-      { target: "gallery", caption: newCaption, rating: String(newRating), detail: newDetail },
-      "gallery-new",
-    );
-    setNewCaption("");
-    setNewRating(5);
-    setNewDetail("");
   }
 
   async function handleDeleteGalleryPhoto(id: string) {
@@ -147,16 +171,10 @@ export default function ImageManager() {
           {stylistAvatar && (
             <Image src={stylistAvatar} alt="Stylist" width={64} height={64} className="h-16 w-16 rounded-full object-cover" />
           )}
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
+          <FileInputButton
+            label={busy === "stylist" ? "Uploading…" : "Choose photo"}
             disabled={busy === "stylist"}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) uploadFile(file, { target: "stylist" }, "stylist");
-              e.target.value = "";
-            }}
-            className="text-sm"
+            onSelect={(file) => uploadFile(file, { target: "stylist" }, "stylist")}
           />
         </div>
       </div>
@@ -169,16 +187,10 @@ export default function ImageManager() {
               <Image src={s.url} alt={s.name} width={64} height={64} className="h-16 w-16 object-cover" />
             )}
             <span className="flex-1 text-sm">{s.name}</span>
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
+            <FileInputButton
+              label={busy === `service-${s.slug}` ? "Uploading…" : "Choose photo"}
               disabled={busy === `service-${s.slug}`}
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) uploadFile(file, { target: "service", categorySlug: s.slug }, `service-${s.slug}`);
-                e.target.value = "";
-              }}
-              className="text-xs"
+              onSelect={(file) => uploadFile(file, { target: "service", categorySlug: s.slug }, `service-${s.slug}`)}
             />
           </div>
         ))}
@@ -208,48 +220,12 @@ export default function ImageManager() {
           ))}
         </div>
 
-        <div className="space-y-2 border-t border-hairline pt-4">
-          <p className="text-xs uppercase tracking-widest text-ink/50">Add a photo</p>
-          <input
-            type="text"
-            placeholder="Caption"
-            value={newCaption}
-            onChange={(e) => setNewCaption(e.target.value)}
-            className="w-full border border-hairline bg-transparent px-3 py-2 text-sm"
-          />
-          <textarea
-            rows={2}
-            placeholder="Review detail (optional)"
-            value={newDetail}
-            onChange={(e) => setNewDetail(e.target.value)}
-            className="w-full border border-hairline bg-transparent px-3 py-2 text-sm"
-          />
-          <div className="flex items-center gap-3">
-            <label className="text-xs uppercase tracking-widest text-ink/50">Rating</label>
-            <select
-              value={newRating}
-              onChange={(e) => setNewRating(Number(e.target.value))}
-              className="border border-hairline bg-transparent px-2 py-1 text-sm"
-            >
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </div>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
+        <div className="border-t border-hairline pt-4">
+          <FileInputButton
+            label={busy === "gallery-new" ? "Uploading…" : "Add a photo"}
             disabled={busy === "gallery-new"}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleAddGalleryPhoto(file);
-              e.target.value = "";
-            }}
-            className="text-sm"
+            onSelect={(file) => uploadFile(file, { target: "gallery" }, "gallery-new")}
           />
-          {busy === "gallery-new" && <p className="text-xs text-ink/50">Uploading…</p>}
         </div>
       </div>
     </div>

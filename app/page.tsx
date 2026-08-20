@@ -2,7 +2,7 @@ import { getEffectiveSiteContent } from "@/lib/siteContentOverrides";
 import { getGalleryEntries, getServiceImages, getStylistAvatarOverride } from "@/lib/siteImages";
 import { getUnavailableDates, getBookedSlotsByDate } from "@/lib/availability";
 import { getServicePrices } from "@/lib/prices";
-import { getBookingSlots } from "@/lib/slots";
+import { getBookingSlots, getAllDateSlotOverrides } from "@/lib/slots";
 import SiteHeader from "@/components/SiteHeader";
 import StylistIntro from "@/components/StylistIntro";
 import Gallery from "@/components/Gallery";
@@ -23,7 +23,9 @@ export default async function Home() {
   const galleryEntries = await getGalleryEntries();
   const galleryImages = galleryEntries.map((e) => e.url);
   const galleryReviews = Object.fromEntries(
-    galleryEntries.map((e) => [e.url.split("/").pop() ?? e.id, { caption: e.caption, rating: e.rating, detail: e.detail }]),
+    galleryEntries
+      .filter((e) => e.caption.trim().length > 0)
+      .map((e) => [e.url.split("/").pop() ?? e.id, { caption: e.caption, rating: e.rating, detail: e.detail }]),
   );
   const serviceImages = await getServiceImages();
   const stylistAvatarOverride = await getStylistAvatarOverride();
@@ -31,6 +33,7 @@ export default async function Home() {
   const bookedSlotsByDate = await getBookedSlotsByDate();
   const pricesPence = await getServicePrices();
   const slots = await getBookingSlots();
+  const slotOverridesByDate = await getAllDateSlotOverrides();
 
   return (
     <main className="min-h-screen bg-cream">
@@ -59,6 +62,7 @@ export default async function Home() {
         categories={categories}
         pricesPence={pricesPence}
         slots={slots}
+        slotOverridesByDate={slotOverridesByDate}
       />
       <HoursContact hours={hours} contact={contact} />
     </main>

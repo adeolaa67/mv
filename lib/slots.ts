@@ -16,3 +16,40 @@ export async function getBookingSlots(): Promise<string[]> {
     return DEFAULT_SLOTS;
   }
 }
+
+// Per-date overrides, doc ID = yyyy-mm-dd — lets the admin set different
+// times for an individual day instead of the site-wide default from
+// getBookingSlots(). A date with no doc (or an empty slots array) just uses
+// the default.
+export async function getDateSlotOverride(date: string): Promise<string[] | null> {
+  try {
+    const doc = await getAdminDb().collection("dateSlots").doc(date).get();
+    const slots = (doc.data() as { slots?: string[] } | undefined)?.slots;
+    return Array.isArray(slots) && slots.length > 0 ? slots : null;
+  } catch (error) {
+    console.error("Failed to read date slot override from Firestore:", error);
+    return null;
+  }
+}
+
+export async function getAllDateSlotOverrides(): Promise<Record<string, string[]>> {
+  try {
+    const snapshot = await getAdminDb().collection("dateSlots").get();
+    const overrides: Record<string, string[]> = {};
+    for (const doc of snapshot.docs) {
+      const slots = (doc.data() as { slots?: string[] } | undefined)?.slots;
+      if (Array.isArray(slots) && slots.length > 0) overrides[doc.id] = slots;
+    }
+    return overrides;
+  } catch (error) {
+    console.error("Failed to read date slot overrides from Firestore:", error);
+    return {};
+  }
+}
+
+// The date's own slots if it has an override, otherwise the site-wide
+// default — used by /api/checkout to validate a booking's requested slot.
+export async function getEffectiveSlotsForDate(date: string): Promise<string[]> {
+  const override = await getDateSlotOverride(date);
+  return override ?? getBookingSlots();
+}
