@@ -1,7 +1,8 @@
 import { randomUUID } from "crypto";
+import { put, del } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/adminSession";
-import { getAdminDb, getAdminBucket } from "@/lib/firebaseAdmin";
+import { getAdminDb } from "@/lib/firebaseAdmin";
 import { siteContent } from "@/lib/content";
 import { getGalleryEntries, getServiceImages, getStylistAvatarOverride } from "@/lib/siteImages";
 
@@ -60,16 +61,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Image is too large." }, { status: 400 });
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
   const id = randomUUID();
   const path = `uploads/${target}/${id}.${ext}`;
 
   try {
-    const bucket = getAdminBucket();
-    const blob = bucket.file(path);
-    await blob.save(buffer, { metadata: { contentType: file.type } });
-    await blob.makePublic();
-    const url = `https://storage.googleapis.com/${bucket.name}/${path}`;
+    const blob = await put(path, file, { access: "public", contentType: file.type });
+    const url = blob.url;
 
     const db = getAdminDb();
     const docRef = db.collection("siteConfig").doc("images");
@@ -127,16 +124,10 @@ export async function DELETE(request: NextRequest) {
     const next = current.filter((e) => e.id !== body.id);
     await getAdminDb().collection("siteConfig").doc("images").set({ gallery: next }, { merge: true });
 
-    // Best-effort — only our own uploads live under uploads/gallery/, local
-    // /public defaults have no matching Storage object to clean up.
-    if (target) {
-      const match = target.url.match(/uploads\/gallery\/[^/]+$/);
-      if (match) {
-        await getAdminBucket()
-          .file(match[0])
-          .delete()
-          .catch(() => {});
-      }
+    // Best-effort — only our own uploads live in Blob storage, local
+    // /public defaults have no matching object to clean up.
+    if (target && target.url.includes("/uploads/gallery/")) {
+      await del(target.url).catch(() => {});
     }
     return NextResponse.json({ ok: true });
   } catch (error) {

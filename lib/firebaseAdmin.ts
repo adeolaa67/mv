@@ -1,6 +1,5 @@
 import { cert, getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { getStorage } from "firebase-admin/storage";
 
 // Server-only: the Admin SDK uses a service account with full read/write
 // access, so this module must never be imported from a client component.
@@ -24,16 +23,9 @@ function getAdminApp() {
 
   return getApps().length
     ? getApps()[0]!
-    : initializeApp({
-        credential: cert({ projectId, clientEmail, privateKey }),
-        storageBucket: `${projectId}.firebasestorage.app`,
-      });
+    : initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
 }
 
 export function getAdminDb() {
   return getFirestore(getAdminApp());
-}
-
-export function getAdminBucket() {
-  return getStorage(getAdminApp()).bucket();
 }
