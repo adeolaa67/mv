@@ -60,6 +60,10 @@ export type SiteContent = {
   categories: ServiceCategory[];
   galleryReviews: Record<string, GalleryReview>;
   services: Service[];
+  shop: {
+    heading: string;
+    intro: string;
+  };
 };
 
 // Admin-editable text overlaid on top of the lib/content.ts defaults. Arrays
@@ -72,6 +76,10 @@ export type SiteContentOverrides = {
   };
   stylist?: {
     bio?: string;
+  };
+  shop?: {
+    heading: string;
+    intro: string;
   };
   hours?: HoursRow[];
   contact?: { label: string }[];

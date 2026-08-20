@@ -1,0 +1,298 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Image from "next/image";
+import ButterflyBurst from "./ButterflyBurst";
+import { WigProduct } from "@/lib/wigProducts";
+
+type ShopGridProps = {
+  products: WigProduct[];
+};
+
+type Burst = { x: number; y: number } | null;
+
+function uniqueInOrder(values: string[]) {
+  return Array.from(new Set(values));
+}
+
+export default function ShopGrid({ products }: ShopGridProps) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [burst, setBurst] = useState<Burst>(null);
+  const [length, setLength] = useState("");
+  const [texture, setTexture] = useState("");
+  const [lace, setLace] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const activeProduct = products.find((p) => p.id === activeId) ?? null;
+
+  const lengths = useMemo(
+    () => (activeProduct ? uniqueInOrder(activeProduct.variants.map((v) => v.length)) : []),
+    [activeProduct],
+  );
+  const textures = useMemo(
+    () =>
+      activeProduct
+        ? uniqueInOrder(activeProduct.variants.filter((v) => v.length === length).map((v) => v.texture))
+        : [],
+    [activeProduct, length],
+  );
+  const laces = useMemo(
+    () =>
+      activeProduct
+        ? uniqueInOrder(
+            activeProduct.variants.filter((v) => v.length === length && v.texture === texture).map((v) => v.lace),
+          )
+        : [],
+    [activeProduct, length, texture],
+  );
+  const matchedVariant = activeProduct?.variants.find(
+    (v) => v.length === length && v.texture === texture && v.lace === lace,
+  );
+  const totalPence = matchedVariant ? matchedVariant.pricePence * quantity : undefined;
+
+  function openProduct(id: string, e: React.MouseEvent) {
+    setBurst({ x: e.clientX, y: e.clientY });
+    setActiveId(id);
+    setLength("");
+    setTexture("");
+    setLace("");
+    setQuantity(1);
+    setError(null);
+  }
+
+  function closeProduct() {
+    setActiveId(null);
+    setCustomerName("");
+    setCustomerEmail("");
+    setCustomerPhone("");
+  }
+
+  async function handleCheckout() {
+    if (!activeProduct || !matchedVariant) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/shop-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productId: activeProduct.id,
+          variantId: matchedVariant.id,
+          quantity,
+          customerName,
+          customerEmail,
+          customerPhone,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        setError(data.error ?? "Something went wrong — please try again.");
+        setSubmitting(false);
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setError("Something went wrong — please try again.");
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="px-6 pb-20">
+      <div className="mx-auto grid max-w-3xl grid-cols-2 gap-4">
+        {products
+          .filter((p) => p.imageUrl)
+          .map((product) => (
+            <button
+              key={product.id}
+              type="button"
+              onClick={(e) => openProduct(product.id, e)}
+              className="border border-hairline text-center transition-colors hover:bg-ink/5"
+            >
+              <div className="h-40 w-full overflow-hidden sm:h-56">
+                <Image
+                  src={product.imageUrl}
+                  alt={product.name}
+                  width={300}
+                  height={300}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              <div className="px-4 py-5">
+                <p className="font-display text-sm">{product.name}</p>
+                <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-ink/60">{product.description}</p>
+                <span className="mt-3 inline-block text-xs uppercase tracking-widest text-bronze">See more</span>
+              </div>
+            </button>
+          ))}
+      </div>
+
+      {burst && <ButterflyBurst originX={burst.x} originY={burst.y} onDone={() => setBurst(null)} />}
+
+      {activeProduct && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={closeProduct}
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-ink/80 px-6 py-10 sm:items-center"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="shop-card-enter relative max-h-full w-full max-w-md overflow-y-auto bg-cream px-6 py-8"
+          >
+            <button
+              type="button"
+              onClick={closeProduct}
+              aria-label="Close"
+              className="absolute right-4 top-3 text-2xl text-ink/60 hover:text-bronze"
+            >
+              &times;
+            </button>
+
+            <div className="h-56 w-full overflow-hidden">
+              <Image
+                src={activeProduct.imageUrl}
+                alt={activeProduct.name}
+                width={500}
+                height={400}
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <p className="mt-4 text-center font-display text-xl">{activeProduct.name}</p>
+            <p className="mt-2 text-center text-sm leading-relaxed text-ink/70">{activeProduct.description}</p>
+
+            <div className="mt-6 space-y-3 text-left">
+              <label className="block">
+                <span className="text-xs uppercase tracking-widest text-ink/60">Length</span>
+                <select
+                  value={length}
+                  onChange={(e) => {
+                    setLength(e.target.value);
+                    setTexture("");
+                    setLace("");
+                  }}
+                  className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                >
+                  <option value="">Choose a length…</option>
+                  {lengths.map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {length && (
+                <label className="block">
+                  <span className="text-xs uppercase tracking-widest text-ink/60">Texture</span>
+                  <select
+                    value={texture}
+                    onChange={(e) => {
+                      setTexture(e.target.value);
+                      setLace("");
+                    }}
+                    className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                  >
+                    <option value="">Choose a texture…</option>
+                    {textures.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {length && texture && (
+                <label className="block">
+                  <span className="text-xs uppercase tracking-widest text-ink/60">Lace</span>
+                  <select
+                    value={lace}
+                    onChange={(e) => setLace(e.target.value)}
+                    className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                  >
+                    <option value="">Choose a lace type…</option>
+                    {laces.map((l) => (
+                      <option key={l} value={l}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              {matchedVariant && (
+                <>
+                  <label className="block">
+                    <span className="text-xs uppercase tracking-widest text-ink/60">Quantity</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      value={quantity}
+                      onChange={(e) =>
+                        setQuantity(Math.min(50, Math.max(1, Number(e.target.value) || 1)))
+                      }
+                      className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-xs uppercase tracking-widest text-ink/60">Name</span>
+                    <input
+                      type="text"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs uppercase tracking-widest text-ink/60">Email</span>
+                    <input
+                      type="email"
+                      value={customerEmail}
+                      onChange={(e) => setCustomerEmail(e.target.value)}
+                      className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs uppercase tracking-widest text-ink/60">Phone</span>
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                    />
+                  </label>
+
+                  {error && <p className="text-sm text-red-700">{error}</p>}
+
+                  <button
+                    type="button"
+                    disabled={
+                      !customerName.trim() || !customerEmail.trim() || !customerPhone.trim() || submitting
+                    }
+                    onClick={handleCheckout}
+                    className="w-full border border-hairline py-2 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
+                  >
+                    {submitting
+                      ? "Redirecting to payment…"
+                      : totalPence
+                        ? `Checkout — pay £${(totalPence / 100).toFixed(2)}`
+                        : "Checkout"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}

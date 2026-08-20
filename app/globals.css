@@ -166,6 +166,51 @@ body {
   animation: shake 0.4s ease-in-out;
 }
 
+/* Wig shop product card → detail transition: a quick 3D flip combined with
+   a scale-up, timed to finish alongside the butterfly burst below. */
+@keyframes flip-zoom-in {
+  0% {
+    transform: scale(0.15) rotateY(0deg);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotateY(360deg);
+    opacity: 1;
+  }
+}
+
+.shop-card-enter {
+  animation: flip-zoom-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+}
+
+/* Gold-and-white butterflies scatter outward from the click point and fade
+   — a decorative flourish on top of the flip/zoom, not the transition
+   mechanism itself, so it degrades gracefully if reduced-motion trims it. */
+@keyframes butterfly-fly {
+  0% {
+    transform: translate(0, 0) scale(0.5) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--bx), var(--by)) scale(1) rotate(var(--brot));
+    opacity: 0;
+  }
+}
+
+.butterfly-particle {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 60;
+  animation: butterfly-fly 0.9s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

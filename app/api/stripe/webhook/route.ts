@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebaseAdmin";
-import { sendBookingConfirmationEmails } from "@/lib/email";
+import { sendBookingConfirmationEmails, sendOrderConfirmationEmails } from "@/lib/email";
 
 function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -39,6 +39,59 @@ export async function POST(request: NextRequest) {
 
   const session = event.data.object as Stripe.Checkout.Session;
   const metadata = session.metadata;
+
+  if (metadata?.type === "wig-order") {
+    const docRef = getAdminDb().collection("orders").doc(session.id);
+    const alreadyExisted = (await docRef.get()).exists;
+    const shipping = session.collected_information?.shipping_details?.address;
+
+    await docRef.set(
+      {
+        productId: metadata.productId ?? "",
+        productName: metadata.productName ?? "",
+        length: metadata.length ?? "",
+        texture: metadata.texture ?? "",
+        lace: metadata.lace ?? "",
+        quantity: Number(metadata.quantity) || 1,
+        customerName: metadata.customerName ?? "",
+        customerEmail: metadata.customerEmail ?? "",
+        customerPhone: metadata.customerPhone ?? "",
+        shippingAddress: shipping
+          ? {
+              line1: shipping.line1 ?? "",
+              line2: shipping.line2 ?? "",
+              city: shipping.city ?? "",
+              postalCode: shipping.postal_code ?? "",
+              country: shipping.country ?? "",
+            }
+          : null,
+        totalPence: session.amount_total ?? 0,
+        status: "confirmed",
+        stripeSessionId: session.id,
+        createdAt: new Date(),
+      },
+      { merge: true },
+    );
+
+    if (!alreadyExisted) {
+      try {
+        await sendOrderConfirmationEmails({
+          productName: metadata.productName ?? "",
+          length: metadata.length ?? "",
+          texture: metadata.texture ?? "",
+          lace: metadata.lace ?? "",
+          quantity: Number(metadata.quantity) || 1,
+          customerName: metadata.customerName ?? "",
+          customerEmail: metadata.customerEmail ?? "",
+          totalPence: session.amount_total ?? 0,
+        });
+      } catch (error) {
+        console.error("Failed to send order confirmation emails:", error);
+      }
+    }
+
+    return NextResponse.json({ received: true });
+  }
 
   if (!metadata?.date || !metadata.slot) {
     console.error("checkout.session.completed missing booking metadata:", session.id);

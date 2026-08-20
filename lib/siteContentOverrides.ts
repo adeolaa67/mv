@@ -21,6 +21,7 @@ export function mergeSiteContent(overrides: SiteContentOverrides): SiteContent {
     ...defaultContent,
     brand: { ...defaultContent.brand, ...overrides.brand },
     stylist: { ...defaultContent.stylist, ...overrides.stylist },
+    shop: { ...defaultContent.shop, ...overrides.shop },
     hours: overrides.hours?.length === defaultContent.hours.length ? overrides.hours : defaultContent.hours,
     contact:
       overrides.contact?.length === defaultContent.contact.length

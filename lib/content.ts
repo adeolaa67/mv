@@ -160,4 +160,8 @@ export const siteContent: SiteContent = {
       categorySlug: "customisation",
     },
   ],
+  shop: {
+    heading: "Shop Our Wigs",
+    intro: "Browse our wig collection below — pick a length, texture, and lace type, then checkout securely.",
+  },
 };

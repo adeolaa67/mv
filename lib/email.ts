@@ -68,3 +68,38 @@ export async function sendBookingConfirmationEmails(booking: BookingConfirmation
     });
   }
 }
+
+type OrderConfirmation = {
+  productName: string;
+  length: string;
+  texture: string;
+  lace: string;
+  quantity: number;
+  customerName: string;
+  customerEmail: string;
+  totalPence: number;
+};
+
+export async function sendOrderConfirmationEmails(order: OrderConfirmation) {
+  const resend = getResend();
+  const from = getFromAddress();
+  const summary = `${order.quantity} x ${order.productName} — ${order.length}, ${order.texture}, ${order.lace}`;
+  const total = `£${(order.totalPence / 100).toFixed(2)}`;
+
+  await resend.emails.send({
+    from,
+    to: order.customerEmail,
+    subject: `Order confirmed — ${order.productName}`,
+    text: `Hi ${order.customerName},\n\nYour payment of ${total} has gone through and your order is confirmed:\n\n${summary}\n\nWe'll be in touch about delivery. Thank you!\n\n— ${siteContent.brand.name}`,
+  });
+
+  const adminEmail = await getAdminEmail();
+  if (adminEmail) {
+    await resend.emails.send({
+      from,
+      to: adminEmail,
+      subject: `New wig order — ${order.productName}`,
+      text: `New confirmed order:\n\n${summary}\nTotal: ${total}\n\nCustomer: ${order.customerName}\nEmail: ${order.customerEmail}`,
+    });
+  }
+}

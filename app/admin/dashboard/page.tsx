@@ -5,6 +5,8 @@ import SlotsEditor from "@/components/admin/SlotsEditor";
 import DateSlotsEditor from "@/components/admin/DateSlotsEditor";
 import ContentEditor from "@/components/admin/ContentEditor";
 import ImageManager from "@/components/admin/ImageManager";
+import WigShopEditor from "@/components/admin/WigShopEditor";
+import OrdersList from "@/components/admin/OrdersList";
 import AddOnsEditor from "@/components/admin/AddOnsEditor";
 import { siteContent } from "@/lib/content";
 
@@ -67,6 +69,21 @@ export default function AdminDashboardPage() {
       </p>
       <div className="mx-auto mt-4 max-w-2xl">
         <ImageManager />
+      </div>
+
+      <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
+        Hair Shop — the 4 wigs for sale, with photo, description, and
+        length/texture/lace variants each priced individually.
+      </p>
+      <div className="mx-auto mt-4 max-w-2xl">
+        <WigShopEditor />
+      </div>
+
+      <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
+        Wig orders — most recent 50, with shipping address for fulfillment.
+      </p>
+      <div className="mx-auto mt-4 max-w-2xl">
+        <OrdersList />
       </div>
 
       <p className="mx-auto mt-8 max-w-2xl text-xs text-ink/40">

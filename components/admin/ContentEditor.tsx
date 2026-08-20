@@ -55,6 +55,7 @@ export default function ContentEditor() {
         body: JSON.stringify({
           brand: { tagline: content.brand.tagline, location: content.brand.location },
           stylist: { bio: content.stylist.bio },
+          shop: { heading: content.shop.heading, intro: content.shop.intro },
           hours: content.hours,
           contact: content.contact.map((c) => ({ label: c.label })),
           policies: content.policies.map((p) => ({ title: p.title, body: p.body })),
@@ -117,6 +118,25 @@ export default function ContentEditor() {
             className={inputClass}
             value={content.brand.location}
             onChange={(e) => setContent({ ...content, brand: { ...content.brand, location: e.target.value } })}
+          />
+        </Field>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-xs uppercase tracking-widest text-ink/50">Hair Shop page</p>
+        <Field label="Heading">
+          <input
+            className={inputClass}
+            value={content.shop.heading}
+            onChange={(e) => setContent({ ...content, shop: { ...content.shop, heading: e.target.value } })}
+          />
+        </Field>
+        <Field label="Intro text">
+          <textarea
+            rows={2}
+            className={inputClass}
+            value={content.shop.intro}
+            onChange={(e) => setContent({ ...content, shop: { ...content.shop, intro: e.target.value } })}
           />
         </Field>
       </div>

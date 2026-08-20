@@ -50,6 +50,9 @@ export async function PUT(request: NextRequest) {
   if (body.stylist && !isNonEmptyString(body.stylist.bio)) {
     return NextResponse.json({ error: "Bio can't be empty." }, { status: 400 });
   }
+  if (body.shop && (!isNonEmptyString(body.shop.heading) || !isNonEmptyString(body.shop.intro))) {
+    return NextResponse.json({ error: "Shop heading and intro can't be empty." }, { status: 400 });
+  }
   if (body.hours) {
     if (
       body.hours.length !== defaultContent.hours.length ||
