@@ -5,6 +5,7 @@ import SlotsEditor from "@/components/admin/SlotsEditor";
 import DateSlotsEditor from "@/components/admin/DateSlotsEditor";
 import ContentEditor from "@/components/admin/ContentEditor";
 import ImageManager from "@/components/admin/ImageManager";
+import AddOnsEditor from "@/components/admin/AddOnsEditor";
 import { siteContent } from "@/lib/content";
 
 export default function AdminDashboardPage() {
@@ -44,6 +45,14 @@ export default function AdminDashboardPage() {
       </p>
       <div className="mx-auto mt-4 max-w-2xl">
         <PriceEditor categories={siteContent.categories} />
+      </div>
+
+      <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
+        Optional extras for each service — customers can tick these to add
+        them (and their price) to their booking.
+      </p>
+      <div className="mx-auto mt-4 max-w-2xl">
+        <AddOnsEditor categories={siteContent.categories} />
       </div>
 
       <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">

@@ -4,6 +4,7 @@ import { siteContent } from "@/lib/content";
 import { getEffectiveSlotsForDate } from "@/lib/slots";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { getServicePrices } from "@/lib/prices";
+import { getAddOnsByCategory } from "@/lib/addOns";
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -20,6 +21,7 @@ type CheckoutBody = {
   slot?: string;
   categorySlug?: string;
   subOption?: string;
+  addOnIds?: string[];
   customerName?: string;
   customerEmail?: string;
   customerPhone?: string;
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const { date, slot, categorySlug, subOption, customerName, customerEmail, customerPhone } = body;
+  const { date, slot, categorySlug, subOption, addOnIds, customerName, customerEmail, customerPhone } = body;
 
   if (!date || !ISO_DATE.test(date)) {
     return NextResponse.json({ error: "date must be yyyy-mm-dd." }, { status: 400 });
@@ -57,6 +59,16 @@ export async function POST(request: NextRequest) {
       { error: "Pricing isn't set up for this service yet — please contact us directly to book." },
       { status: 409 },
     );
+  }
+
+  // Add-ons are optional — an empty/missing list is fine, but any ID that IS
+  // sent must be a real, priced add-on for this category (never trust the
+  // client's own price for these).
+  const addOnsForCategory = (await getAddOnsByCategory())[category.slug] ?? [];
+  const requestedAddOnIds = Array.isArray(addOnIds) ? addOnIds : [];
+  const selectedAddOns = addOnsForCategory.filter((a) => requestedAddOnIds.includes(a.id));
+  if (selectedAddOns.length !== requestedAddOnIds.length) {
+    return NextResponse.json({ error: "One or more selected extras are no longer available." }, { status: 400 });
   }
 
   // Re-check availability server-side — the calendar's greyed-out slots are
@@ -91,6 +103,14 @@ export async function POST(request: NextRequest) {
             },
           },
         },
+        ...selectedAddOns.map((addOn) => ({
+          quantity: 1,
+          price_data: {
+            currency: "gbp" as const,
+            unit_amount: addOn.pricePence,
+            product_data: { name: `Extra: ${addOn.name}` },
+          },
+        })),
       ],
       customer_email: customerEmail,
       metadata: {
@@ -98,6 +118,7 @@ export async function POST(request: NextRequest) {
         slot,
         categorySlug: category.slug,
         subOption,
+        addOnNames: selectedAddOns.map((a) => a.name).join(", "),
         customerName,
         customerEmail,
         customerPhone,

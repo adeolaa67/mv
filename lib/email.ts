@@ -31,6 +31,7 @@ type BookingConfirmation = {
   slot: string;
   categorySlug: string;
   subOption: string;
+  addOnNames: string;
   customerName: string;
   customerEmail: string;
   amountPence: number;
@@ -46,7 +47,8 @@ export async function sendBookingConfirmationEmails(booking: BookingConfirmation
   const categoryName =
     siteContent.categories.find((c) => c.slug === booking.categorySlug)?.name ?? booking.categorySlug;
 
-  const summary = `${booking.subOption} (${categoryName}) on ${booking.date} at ${booking.slot}`;
+  const extras = booking.addOnNames ? ` with ${booking.addOnNames}` : "";
+  const summary = `${booking.subOption}${extras} (${categoryName}) on ${booking.date} at ${booking.slot}`;
   const amount = `£${(booking.amountPence / 100).toFixed(2)}`;
 
   await resend.emails.send({

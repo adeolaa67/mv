@@ -3,6 +3,7 @@ import { getGalleryEntries, getServiceImages, getStylistAvatarOverride } from "@
 import { getUnavailableDates, getBookedSlotsByDate } from "@/lib/availability";
 import { getServicePrices } from "@/lib/prices";
 import { getBookingSlots, getAllDateSlotOverrides } from "@/lib/slots";
+import { getAddOnsByCategory } from "@/lib/addOns";
 import SiteHeader from "@/components/SiteHeader";
 import StylistIntro from "@/components/StylistIntro";
 import Gallery from "@/components/Gallery";
@@ -34,6 +35,7 @@ export default async function Home() {
   const pricesPence = await getServicePrices();
   const slots = await getBookingSlots();
   const slotOverridesByDate = await getAllDateSlotOverrides();
+  const addOnsByCategory = await getAddOnsByCategory();
 
   return (
     <main className="min-h-screen bg-cream">
@@ -63,6 +65,7 @@ export default async function Home() {
         pricesPence={pricesPence}
         slots={slots}
         slotOverridesByDate={slotOverridesByDate}
+        addOnsByCategory={addOnsByCategory}
       />
       <HoursContact hours={hours} contact={contact} />
     </main>

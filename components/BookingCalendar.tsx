@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { CalendarIcon } from "./icons";
 import { ServiceCategory } from "@/lib/types";
+import { AddOn } from "@/lib/addOns";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -14,6 +15,7 @@ type BookingCalendarProps = {
   pricesPence: Record<string, number>;
   slots: string[];
   slotOverridesByDate: Record<string, string[]>;
+  addOnsByCategory: Record<string, AddOn[]>;
 };
 
 function toISODate(date: Date) {
@@ -35,6 +37,7 @@ export default function BookingCalendar({
   pricesPence,
   slots,
   slotOverridesByDate,
+  addOnsByCategory,
 }: BookingCalendarProps) {
   const [viewDate, setViewDate] = useState(() => new Date());
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
@@ -43,6 +46,7 @@ export default function BookingCalendar({
   const [slot, setSlot] = useState<string | null>(null);
   const [categorySlug, setCategorySlug] = useState("");
   const [subOption, setSubOption] = useState("");
+  const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -54,6 +58,11 @@ export default function BookingCalendar({
   const selectedPricePence = selectedCategory ? pricesPence[selectedCategory.slug] : undefined;
   const bookedSlotsForFocusedDate = focusedDate ? bookedSlotsByDate[focusedDate] ?? [] : [];
   const slotsForFocusedDate = focusedDate ? slotOverridesByDate[focusedDate] ?? slots : slots;
+  const availableAddOns = selectedCategory ? addOnsByCategory[selectedCategory.slug] ?? [] : [];
+  const addOnsTotalPence = availableAddOns
+    .filter((a) => selectedAddOnIds.includes(a.id))
+    .reduce((sum, a) => sum + a.pricePence, 0);
+  const totalPricePence = selectedPricePence ? selectedPricePence + addOnsTotalPence : undefined;
 
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
@@ -84,6 +93,7 @@ export default function BookingCalendar({
     setSlot(null);
     setCategorySlug("");
     setSubOption("");
+    setSelectedAddOnIds([]);
     setError(null);
     setFocusedDate(iso);
   }
@@ -93,6 +103,7 @@ export default function BookingCalendar({
     setSlot(null);
     setCategorySlug("");
     setSubOption("");
+    setSelectedAddOnIds([]);
     setError(null);
   }
 
@@ -100,12 +111,20 @@ export default function BookingCalendar({
     setSlot(s);
     setCategorySlug("");
     setSubOption("");
+    setSelectedAddOnIds([]);
     setError(null);
   }
 
   function handleSelectCategory(slug: string) {
     setCategorySlug(slug);
     setSubOption("");
+    setSelectedAddOnIds([]);
+  }
+
+  function toggleAddOn(addOnId: string) {
+    setSelectedAddOnIds((prev) =>
+      prev.includes(addOnId) ? prev.filter((id) => id !== addOnId) : [...prev, addOnId],
+    );
   }
 
   async function handleBook() {
@@ -121,6 +140,7 @@ export default function BookingCalendar({
           slot,
           categorySlug,
           subOption,
+          addOnIds: selectedAddOnIds,
           customerName,
           customerEmail,
           customerPhone,
@@ -279,6 +299,32 @@ export default function BookingCalendar({
                   </label>
                 )}
 
+                {subOption && availableAddOns.length > 0 && (
+                  <div className="block">
+                    <span className="text-xs uppercase tracking-widest text-ink/60">
+                      Add extras
+                    </span>
+                    <div className="mt-1 space-y-1">
+                      {availableAddOns.map((addOn) => (
+                        <label
+                          key={addOn.id}
+                          className="flex cursor-pointer items-center justify-between border border-hairline px-3 py-2 text-sm"
+                        >
+                          <span className="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedAddOnIds.includes(addOn.id)}
+                              onChange={() => toggleAddOn(addOn.id)}
+                            />
+                            {addOn.name}
+                          </span>
+                          <span className="text-ink/60">+£{(addOn.pricePence / 100).toFixed(2)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {subOption && (
                   <>
                     <label className="block">
@@ -337,8 +383,8 @@ export default function BookingCalendar({
                 >
                   {submitting
                     ? "Redirecting to payment…"
-                    : selectedPricePence
-                      ? `Book — pay £${(selectedPricePence / 100).toFixed(2)}`
+                    : totalPricePence
+                      ? `Book — pay £${(totalPricePence / 100).toFixed(2)}`
                       : "Book"}
                 </button>
               </div>
