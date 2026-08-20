@@ -1,6 +1,9 @@
 import LogoutButton from "@/components/admin/LogoutButton";
 import BlockOutCalendar from "@/components/admin/BlockOutCalendar";
 import PriceEditor from "@/components/admin/PriceEditor";
+import SlotsEditor from "@/components/admin/SlotsEditor";
+import ContentEditor from "@/components/admin/ContentEditor";
+import ImageManager from "@/components/admin/ImageManager";
 import { siteContent } from "@/lib/content";
 
 export default function AdminDashboardPage() {
@@ -20,11 +23,32 @@ export default function AdminDashboardPage() {
       </div>
 
       <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
+        Set which times of day customers can book.
+      </p>
+      <div className="mx-auto mt-4 max-w-2xl">
+        <SlotsEditor />
+      </div>
+
+      <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
         Set the price for each service — customers pay this full amount online
         when they book. A service with no price set can't be booked online yet.
       </p>
       <div className="mx-auto mt-4 max-w-2xl">
         <PriceEditor categories={siteContent.categories} />
+      </div>
+
+      <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
+        Edit the text shown across the site — bio, hours, contact info, policies, and service descriptions.
+      </p>
+      <div className="mx-auto mt-4 max-w-2xl">
+        <ContentEditor />
+      </div>
+
+      <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
+        Manage photos — your profile picture, each service's image, and the gallery.
+      </p>
+      <div className="mx-auto mt-4 max-w-2xl">
+        <ImageManager />
       </div>
 
       <p className="mx-auto mt-8 max-w-2xl text-xs text-ink/40">

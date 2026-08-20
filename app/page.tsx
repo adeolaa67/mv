@@ -1,8 +1,8 @@
-import { siteContent } from "@/lib/content";
-import { getGalleryImages } from "@/lib/gallery";
-import { getServiceImages } from "@/lib/services";
+import { getEffectiveSiteContent } from "@/lib/siteContentOverrides";
+import { getGalleryEntries, getServiceImages, getStylistAvatarOverride } from "@/lib/siteImages";
 import { getUnavailableDates, getBookedSlotsByDate } from "@/lib/availability";
 import { getServicePrices } from "@/lib/prices";
+import { getBookingSlots } from "@/lib/slots";
 import SiteHeader from "@/components/SiteHeader";
 import StylistIntro from "@/components/StylistIntro";
 import Gallery from "@/components/Gallery";
@@ -18,13 +18,19 @@ import BookingCalendar from "@/components/BookingCalendar";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const { brand, stylist, hours, contact, policies, purchaseGuide, galleryReviews, services, categories } =
-    siteContent;
-  const galleryImages = getGalleryImages();
-  const serviceImages = getServiceImages();
+  const { brand, stylist, hours, contact, policies, purchaseGuide, services, categories } =
+    await getEffectiveSiteContent();
+  const galleryEntries = await getGalleryEntries();
+  const galleryImages = galleryEntries.map((e) => e.url);
+  const galleryReviews = Object.fromEntries(
+    galleryEntries.map((e) => [e.url.split("/").pop() ?? e.id, { caption: e.caption, rating: e.rating, detail: e.detail }]),
+  );
+  const serviceImages = await getServiceImages();
+  const stylistAvatarOverride = await getStylistAvatarOverride();
   const unavailableDates = await getUnavailableDates();
   const bookedSlotsByDate = await getBookedSlotsByDate();
   const pricesPence = await getServicePrices();
+  const slots = await getBookingSlots();
 
   return (
     <main className="min-h-screen bg-cream">
@@ -33,7 +39,7 @@ export default async function Home() {
         name={stylist.greetingName}
         bio={stylist.bio}
         avatarInitials={stylist.avatarInitials}
-        avatarSrc={stylist.avatarSrc}
+        avatarSrc={stylistAvatarOverride ?? stylist.avatarSrc}
       />
       <Gallery images={galleryImages} reviews={galleryReviews} />
       <BookingPolicies policies={policies} />
@@ -52,6 +58,7 @@ export default async function Home() {
         bookedSlotsByDate={bookedSlotsByDate}
         categories={categories}
         pricesPence={pricesPence}
+        slots={slots}
       />
       <HoursContact hours={hours} contact={contact} />
     </main>

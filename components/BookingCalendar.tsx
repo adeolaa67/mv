@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { CalendarIcon } from "./icons";
 import { ServiceCategory } from "@/lib/types";
-import { SLOTS } from "@/lib/slots";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -13,6 +12,7 @@ type BookingCalendarProps = {
   bookedSlotsByDate: Record<string, string[]>;
   categories: ServiceCategory[];
   pricesPence: Record<string, number>;
+  slots: string[];
 };
 
 function toISODate(date: Date) {
@@ -32,6 +32,7 @@ export default function BookingCalendar({
   bookedSlotsByDate,
   categories,
   pricesPence,
+  slots,
 }: BookingCalendarProps) {
   const [viewDate, setViewDate] = useState(() => new Date());
   const [focusedDate, setFocusedDate] = useState<string | null>(null);
@@ -213,7 +214,7 @@ export default function BookingCalendar({
               Available Slots
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {SLOTS.map((s) => {
+              {slots.map((s) => {
                 const isTaken = bookedSlotsForFocusedDate.includes(s);
                 return (
                   <button

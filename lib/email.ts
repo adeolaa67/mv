@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import { siteContent } from "./content";
+import { getEffectiveSiteContent } from "./siteContentOverrides";
 
 function getResend() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -17,11 +18,12 @@ function getFromAddress() {
   return from;
 }
 
-// Business's own inbox, from the same contact list rendered on the site —
-// no separate admin-email env var needed, this is already the one address
-// customers are told to reach the business at.
-function getAdminEmail() {
-  return siteContent.contact.find((c) => c.icon === "mail")?.label;
+// Business's own inbox, from the same (admin-editable) contact list rendered
+// on the site — no separate admin-email env var needed, this is already the
+// one address customers are told to reach the business at.
+async function getAdminEmail() {
+  const content = await getEffectiveSiteContent();
+  return content.contact.find((c) => c.icon === "mail")?.label;
 }
 
 type BookingConfirmation = {
@@ -54,7 +56,7 @@ export async function sendBookingConfirmationEmails(booking: BookingConfirmation
     text: `Hi ${booking.customerName},\n\nYour payment of ${amount} has gone through and your appointment is booked and paid in full:\n\n${summary}\n\nSee you then!\n\n— ${siteContent.brand.name}`,
   });
 
-  const adminEmail = getAdminEmail();
+  const adminEmail = await getAdminEmail();
   if (adminEmail) {
     await resend.emails.send({
       from,
