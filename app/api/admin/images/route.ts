@@ -5,6 +5,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/adminSessio
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { siteContent } from "@/lib/content";
 import { getGalleryEntries, getServiceImages, getStylistAvatarOverride } from "@/lib/siteImages";
+import { AUTO_GALLERY_REVIEWS } from "@/lib/galleryReviewPool";
 
 async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
@@ -72,11 +73,11 @@ export async function POST(request: NextRequest) {
     const docRef = db.collection("siteConfig").doc("images");
 
     if (target === "gallery") {
-      const caption = String(formData.get("caption") ?? "").trim();
-      const detail = String(formData.get("detail") ?? "").trim();
-      const rating = Math.min(5, Math.max(1, Number(formData.get("rating")) || 5));
       const current = await getGalleryEntries();
-      const next = [...current, { id, url, caption, rating, detail }];
+      // Cycle through the review pool by position so consecutive uploads
+      // don't repeat the same review until the pool wraps around.
+      const review = AUTO_GALLERY_REVIEWS[current.length % AUTO_GALLERY_REVIEWS.length];
+      const next = [...current, { id, url, ...review }];
       await docRef.set({ gallery: next }, { merge: true });
       return NextResponse.json({ ok: true, url, id });
     }
