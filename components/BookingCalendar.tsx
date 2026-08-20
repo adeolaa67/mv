@@ -318,7 +318,9 @@ export default function BookingCalendar({
                             />
                             {addOn.name}
                           </span>
-                          <span className="text-ink/60">+£{(addOn.pricePence / 100).toFixed(2)}</span>
+                          <span className="text-ink/60">
+                            {addOn.pricePence > 0 ? `+£${(addOn.pricePence / 100).toFixed(2)}` : "Free"}
+                          </span>
                         </label>
                       ))}
                     </div>

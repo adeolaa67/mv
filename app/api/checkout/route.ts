@@ -103,14 +103,16 @@ export async function POST(request: NextRequest) {
             },
           },
         },
-        ...selectedAddOns.map((addOn) => ({
-          quantity: 1,
-          price_data: {
-            currency: "gbp" as const,
-            unit_amount: addOn.pricePence,
-            product_data: { name: `Extra: ${addOn.name}` },
-          },
-        })),
+        ...selectedAddOns
+          .filter((addOn) => addOn.pricePence > 0)
+          .map((addOn) => ({
+            quantity: 1,
+            price_data: {
+              currency: "gbp" as const,
+              unit_amount: addOn.pricePence,
+              product_data: { name: `Extra: ${addOn.name}` },
+            },
+          })),
       ],
       customer_email: customerEmail,
       metadata: {

@@ -12,6 +12,7 @@ type DraftItem = { id: string; name: string; price: string };
 
 export default function AddOnsEditor({ categories }: AddOnsEditorProps) {
   const [drafts, setDrafts] = useState<Record<string, DraftItem[]>>({});
+  const [copySource, setCopySource] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export default function AddOnsEditor({ categories }: AddOnsEditorProps) {
             next[category.slug] = (byCategory[category.slug] ?? []).map((item) => ({
               id: item.id,
               name: item.name,
-              price: (item.pricePence / 100).toFixed(2),
+              price: item.pricePence > 0 ? (item.pricePence / 100).toFixed(2) : "",
             }));
           }
           setDrafts(next);
@@ -50,6 +51,21 @@ export default function AddOnsEditor({ categories }: AddOnsEditorProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Copies another category's draft list over this one's — ids are stripped
+  // so the save assigns fresh ones, keeping each category's items distinct
+  // even though they started as duplicates. Doesn't save by itself; the
+  // admin still has to hit Save to persist it.
+  function copyFrom(targetSlug: string, sourceSlug: string) {
+    if (!sourceSlug) return;
+    const source = drafts[sourceSlug] ?? [];
+    setDrafts((prev) => ({
+      ...prev,
+      [targetSlug]: source.map((row) => ({ id: "", name: row.name, price: row.price })),
+    }));
+    setError(null);
+    setSavedSlug(null);
+  }
 
   function addRow(slug: string) {
     setDrafts((prev) => ({
@@ -77,9 +93,10 @@ export default function AddOnsEditor({ categories }: AddOnsEditorProps) {
     const items = [];
     for (const row of rows) {
       if (!row.name.trim()) continue;
-      const pounds = Number(row.price);
-      if (!Number.isFinite(pounds) || pounds <= 0) {
-        setError(`Give "${row.name}" a price greater than £0 before saving.`);
+      // Blank price means free — only validate it when something was typed.
+      const pounds = row.price.trim() === "" ? 0 : Number(row.price);
+      if (!Number.isFinite(pounds) || pounds < 0) {
+        setError(`"${row.name}" has an invalid price.`);
         return;
       }
       items.push({ id: row.id || undefined, name: row.name.trim(), pricePence: Math.round(pounds * 100) });
@@ -101,7 +118,7 @@ export default function AddOnsEditor({ categories }: AddOnsEditorProps) {
         [slug]: data.items.map((item: AddOn) => ({
           id: item.id,
           name: item.name,
-          price: (item.pricePence / 100).toFixed(2),
+          price: item.pricePence > 0 ? (item.pricePence / 100).toFixed(2) : "",
         })),
       }));
       setSavedSlug(slug);
@@ -124,7 +141,7 @@ export default function AddOnsEditor({ categories }: AddOnsEditorProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-6 border border-hairline bg-white/40 px-6 py-8">
       <p className="text-xs uppercase tracking-widest text-ink/50">
-        Optional extras customers can tick alongside each service — each adds its price to the total
+        Optional extras customers can tick alongside each service — leave the price blank for a free extra
       </p>
 
       {error && (
@@ -135,7 +152,33 @@ export default function AddOnsEditor({ categories }: AddOnsEditorProps) {
 
       {categories.map((category) => (
         <div key={category.slug} className="space-y-2 border-t border-hairline pt-4 first:border-t-0 first:pt-0">
-          <p className="text-sm font-medium">{category.name}</p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-medium">{category.name}</p>
+            <div className="flex items-center gap-2">
+              <select
+                value={copySource[category.slug] ?? ""}
+                onChange={(e) => setCopySource((prev) => ({ ...prev, [category.slug]: e.target.value }))}
+                className="border border-hairline bg-transparent px-2 py-1 text-xs"
+              >
+                <option value="">Copy list from…</option>
+                {categories
+                  .filter((c) => c.slug !== category.slug)
+                  .map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.name}
+                    </option>
+                  ))}
+              </select>
+              <button
+                type="button"
+                disabled={!copySource[category.slug]}
+                onClick={() => copyFrom(category.slug, copySource[category.slug])}
+                className="border border-hairline px-2 py-1 text-xs uppercase tracking-widest transition-colors hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
           {(drafts[category.slug] ?? []).map((row, i) => (
             <div key={i} className="flex items-center gap-2">
               <input
@@ -150,6 +193,7 @@ export default function AddOnsEditor({ categories }: AddOnsEditorProps) {
                 type="number"
                 min="0"
                 step="0.01"
+                placeholder="Free"
                 value={row.price}
                 onChange={(e) => updateRow(category.slug, i, "price", e.target.value)}
                 className="w-20 border border-hairline bg-transparent px-2 py-1 text-sm"

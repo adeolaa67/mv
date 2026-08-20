@@ -48,24 +48,23 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Invalid add-ons list." }, { status: 400 });
   }
   for (const item of items) {
+    if (typeof item.name !== "string" || !item.name.trim()) {
+      return NextResponse.json({ error: "Each add-on needs a name." }, { status: 400 });
+    }
+    // Price is optional — an add-on can be free (e.g. an FYI checkbox with
+    // no extra charge). If given, it just can't be negative.
     if (
-      typeof item.name !== "string" ||
-      !item.name.trim() ||
-      typeof item.pricePence !== "number" ||
-      !Number.isFinite(item.pricePence) ||
-      item.pricePence <= 0
+      item.pricePence !== undefined &&
+      (typeof item.pricePence !== "number" || !Number.isFinite(item.pricePence) || item.pricePence < 0)
     ) {
-      return NextResponse.json(
-        { error: "Each add-on needs a name and a price greater than £0." },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: `"${item.name}" has an invalid price.` }, { status: 400 });
     }
   }
 
   const normalized = items.map((item) => ({
     id: item.id && item.id.trim() ? item.id : randomUUID(),
     name: item.name!.trim(),
-    pricePence: Math.round(item.pricePence!),
+    pricePence: typeof item.pricePence === "number" ? Math.round(item.pricePence) : 0,
   }));
 
   try {
