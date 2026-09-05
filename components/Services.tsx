@@ -49,7 +49,7 @@ export default function Services({ services, categories, images, moreHref, price
             )}
             <div className="px-4 py-6">
               <p className="font-display text-sm">{service.name}</p>
-              <p className="mt-2 text-xs leading-relaxed text-ink/60">{service.description}</p>
+              <span className="mt-3 inline-block text-xs uppercase tracking-widest text-bronze">Show more</span>
             </div>
           </button>
         ))}

@@ -62,3 +62,14 @@ export async function getStylistAvatarOverride(): Promise<string | null> {
     return null;
   }
 }
+
+export async function getShopBannerImage(): Promise<string | null> {
+  try {
+    const doc = await getAdminDb().collection("siteConfig").doc("images").get();
+    const banner = (doc.data() as { shopBanner?: string } | undefined)?.shopBanner;
+    return banner ?? null;
+  } catch (error) {
+    console.error("Failed to read shop banner image from Firestore:", error);
+    return null;
+  }
+}

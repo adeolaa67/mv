@@ -11,6 +11,7 @@ export default function ImageManager() {
   const [gallery, setGallery] = useState<GalleryEntry[]>([]);
   const [services, setServices] = useState<ServiceImage[]>([]);
   const [stylistAvatar, setStylistAvatar] = useState<string | null>(null);
+  const [shopBanner, setShopBanner] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -25,6 +26,7 @@ export default function ImageManager() {
       setGallery(data.gallery);
       setServices(data.services);
       setStylistAvatar(data.stylistAvatar);
+      setShopBanner(data.shopBanner);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load images.");
     } finally {
@@ -100,6 +102,20 @@ export default function ImageManager() {
             label={busy === "stylist" ? "Uploading…" : "Choose photo"}
             disabled={busy === "stylist"}
             onSelect={(file) => uploadFile(file, { target: "stylist" }, "stylist")}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-xs uppercase tracking-widest text-ink/50">Shop Ade&apos;s Hair banner image</p>
+        <div className="flex items-center gap-4">
+          {shopBanner && (
+            <Image src={shopBanner} alt="Shop banner" width={96} height={64} className="h-16 w-24 object-cover" />
+          )}
+          <FileInputButton
+            label={busy === "shopBanner" ? "Uploading…" : "Choose photo"}
+            disabled={busy === "shopBanner"}
+            onSelect={(file) => uploadFile(file, { target: "shopBanner" }, "shopBanner")}
           />
         </div>
       </div>

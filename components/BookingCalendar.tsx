@@ -45,7 +45,7 @@ export default function BookingCalendar({
   const [shaking, setShaking] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [categorySlug, setCategorySlug] = useState("");
-  const [subOption, setSubOption] = useState("");
+  const [selectedSubOptions, setSelectedSubOptions] = useState<string[]>([]);
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
@@ -92,7 +92,7 @@ export default function BookingCalendar({
     }
     setSlot(null);
     setCategorySlug("");
-    setSubOption("");
+    setSelectedSubOptions([]);
     setSelectedAddOnIds([]);
     setError(null);
     setFocusedDate(iso);
@@ -102,7 +102,7 @@ export default function BookingCalendar({
     setFocusedDate(null);
     setSlot(null);
     setCategorySlug("");
-    setSubOption("");
+    setSelectedSubOptions([]);
     setSelectedAddOnIds([]);
     setError(null);
   }
@@ -110,14 +110,14 @@ export default function BookingCalendar({
   function handleSelectSlot(s: string) {
     setSlot(s);
     setCategorySlug("");
-    setSubOption("");
+    setSelectedSubOptions([]);
     setSelectedAddOnIds([]);
     setError(null);
   }
 
   function handleSelectCategory(slug: string) {
     setCategorySlug(slug);
-    setSubOption("");
+    setSelectedSubOptions([]);
     setSelectedAddOnIds([]);
   }
 
@@ -127,8 +127,14 @@ export default function BookingCalendar({
     );
   }
 
+  function toggleSubOption(option: string) {
+    setSelectedSubOptions((prev) =>
+      prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option],
+    );
+  }
+
   async function handleBook() {
-    if (!focusedDate || !slot || !categorySlug || !subOption) return;
+    if (!focusedDate || !slot || !categorySlug || selectedSubOptions.length === 0) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -139,7 +145,7 @@ export default function BookingCalendar({
           date: focusedDate,
           slot,
           categorySlug,
-          subOption,
+          subOptions: selectedSubOptions,
           addOnIds: selectedAddOnIds,
           customerName,
           customerEmail,
@@ -279,27 +285,29 @@ export default function BookingCalendar({
                 </label>
 
                 {selectedCategory && (
-                  <label className="block">
+                  <div className="block">
                     <span className="text-xs uppercase tracking-widest text-ink/60">
                       Sub-category
                     </span>
-                    <select
-                      name="subCategory"
-                      value={subOption}
-                      onChange={(e) => setSubOption(e.target.value)}
-                      className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
-                    >
-                      <option value="">Choose an option…</option>
+                    <div className="mt-1 space-y-1">
                       {selectedCategory.options.map((option) => (
-                        <option key={option} value={option}>
+                        <label
+                          key={option}
+                          className="flex cursor-pointer items-center gap-2 border border-hairline px-3 py-2 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSubOptions.includes(option)}
+                            onChange={() => toggleSubOption(option)}
+                          />
                           {option}
-                        </option>
+                        </label>
                       ))}
-                    </select>
-                  </label>
+                    </div>
+                  </div>
                 )}
 
-                {subOption && availableAddOns.length > 0 && (
+                {selectedSubOptions.length > 0 && availableAddOns.length > 0 && (
                   <div className="block">
                     <span className="text-xs uppercase tracking-widest text-ink/60">
                       Add extras
@@ -327,7 +335,7 @@ export default function BookingCalendar({
                   </div>
                 )}
 
-                {subOption && (
+                {selectedSubOptions.length > 0 && (
                   <>
                     <label className="block">
                       <span className="text-xs uppercase tracking-widest text-ink/60">Name</span>
@@ -362,7 +370,7 @@ export default function BookingCalendar({
                   </>
                 )}
 
-                {subOption && !selectedPricePence && (
+                {selectedSubOptions.length > 0 && !selectedPricePence && (
                   <p className="text-sm text-ink/60">
                     Pricing for this service isn&apos;t set up yet — please contact us directly to book.
                   </p>
@@ -373,7 +381,7 @@ export default function BookingCalendar({
                 <button
                   type="button"
                   disabled={
-                    !subOption ||
+                    selectedSubOptions.length === 0 ||
                     !selectedPricePence ||
                     !customerName.trim() ||
                     !customerEmail.trim() ||

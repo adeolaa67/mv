@@ -3,10 +3,11 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import ButterflyBurst from "./ButterflyBurst";
-import { WigProduct } from "@/lib/wigProducts";
+import { PRODUCT_CATEGORIES, ProductCategorySlug, WigProduct, minPricePence } from "@/lib/wigProducts";
 
 type ShopGridProps = {
   products: WigProduct[];
+  initialCategory?: ProductCategorySlug;
 };
 
 type Burst = { x: number; y: number } | null;
@@ -15,7 +16,8 @@ function uniqueInOrder(values: string[]) {
   return Array.from(new Set(values));
 }
 
-export default function ShopGrid({ products }: ShopGridProps) {
+export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
+  const [activeCategory, setActiveCategory] = useState<ProductCategorySlug>(initialCategory ?? "wigs");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [burst, setBurst] = useState<Burst>(null);
   const [length, setLength] = useState("");
@@ -102,35 +104,67 @@ export default function ShopGrid({ products }: ShopGridProps) {
     }
   }
 
+  const visibleProducts = products.filter((p) => p.category === activeCategory && p.imageUrl);
+
   return (
     <section className="px-6 pb-20">
-      <div className="mx-auto grid max-w-3xl grid-cols-2 gap-4">
-        {products
-          .filter((p) => p.imageUrl)
-          .map((product) => (
-            <button
-              key={product.id}
-              type="button"
-              onClick={(e) => openProduct(product.id, e)}
-              className="border border-hairline text-center transition-colors hover:bg-ink/5"
-            >
-              <div className="h-40 w-full overflow-hidden sm:h-56">
-                <Image
-                  src={product.imageUrl}
-                  alt={product.name}
-                  width={300}
-                  height={300}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <div className="px-4 py-5">
-                <p className="font-display text-sm">{product.name}</p>
-                <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-ink/60">{product.description}</p>
-                <span className="mt-3 inline-block text-xs uppercase tracking-widest text-bronze">See more</span>
-              </div>
-            </button>
-          ))}
+      <div className="mx-auto mb-8 flex max-w-3xl flex-wrap justify-center gap-2 sm:gap-3">
+        {PRODUCT_CATEGORIES.map((c) => (
+          <button
+            key={c.slug}
+            type="button"
+            onClick={() => setActiveCategory(c.slug)}
+            className={`border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${
+              activeCategory === c.slug
+                ? "border-bronze bg-bronze text-cream"
+                : "border-hairline text-ink/60 hover:border-bronze hover:text-bronze"
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
       </div>
+
+      {visibleProducts.length === 0 ? (
+        <p className="mx-auto max-w-md text-center text-sm text-ink/50">
+          New {PRODUCT_CATEGORIES.find((c) => c.slug === activeCategory)?.label.toLowerCase()} are on their way —
+          check back soon.
+        </p>
+      ) : (
+        <div className="mx-auto grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-3">
+          {visibleProducts.map((product) => {
+            const from = minPricePence(product);
+            return (
+              <button
+                key={product.id}
+                type="button"
+                onClick={(e) => openProduct(product.id, e)}
+                className="border border-hairline text-center transition-colors hover:bg-ink/5"
+              >
+                <div className="h-40 w-full overflow-hidden sm:h-56">
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.name}
+                    width={300}
+                    height={300}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="px-4 py-5">
+                  <p className="font-display text-sm">{product.name}</p>
+                  <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-ink/60">{product.description}</p>
+                  {from != null && (
+                    <p className="mt-2 text-xs uppercase tracking-widest text-ink/50">
+                      From £{(from / 100).toFixed(2)}
+                    </p>
+                  )}
+                  <span className="mt-3 inline-block text-xs uppercase tracking-widest text-bronze">See more</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {burst && <ButterflyBurst originX={burst.x} originY={burst.y} onDone={() => setBurst(null)} />}
 

@@ -20,7 +20,7 @@ type CheckoutBody = {
   date?: string;
   slot?: string;
   categorySlug?: string;
-  subOption?: string;
+  subOptions?: string[];
   addOnIds?: string[];
   customerName?: string;
   customerEmail?: string;
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const { date, slot, categorySlug, subOption, addOnIds, customerName, customerEmail, customerPhone } = body;
+  const { date, slot, categorySlug, subOptions, addOnIds, customerName, customerEmail, customerPhone } = body;
 
   if (!date || !ISO_DATE.test(date)) {
     return NextResponse.json({ error: "date must be yyyy-mm-dd." }, { status: 400 });
@@ -45,9 +45,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid slot." }, { status: 400 });
   }
   const category = siteContent.categories.find((c) => c.slug === categorySlug);
-  if (!category || !subOption || !category.options.includes(subOption)) {
+  if (
+    !category ||
+    !Array.isArray(subOptions) ||
+    subOptions.length === 0 ||
+    !subOptions.every((o) => category.options.includes(o))
+  ) {
     return NextResponse.json({ error: "Invalid category or option." }, { status: 400 });
   }
+  const subOptionsLabel = subOptions.join(", ");
   if (!customerName?.trim() || !customerEmail?.trim() || !customerPhone?.trim()) {
     return NextResponse.json({ error: "Name, email, and phone are required." }, { status: 400 });
   }
@@ -98,7 +104,7 @@ export async function POST(request: NextRequest) {
             currency: "gbp",
             unit_amount: pricePence,
             product_data: {
-              name: subOption,
+              name: subOptionsLabel,
               description: `${date} at ${slot}. Paid in full.`,
             },
           },
@@ -119,7 +125,7 @@ export async function POST(request: NextRequest) {
         date,
         slot,
         categorySlug: category.slug,
-        subOption,
+        subOption: subOptionsLabel,
         addOnNames: selectedAddOns.map((a) => a.name).join(", "),
         customerName,
         customerEmail,

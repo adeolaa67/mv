@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { sendBookingConfirmationEmails, sendOrderConfirmationEmails } from "@/lib/email";
+import { PRODUCT_CATEGORIES } from "@/lib/wigProducts";
 
 function getStripe() {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
 
     await docRef.set(
       {
+        category: metadata.category ?? "",
         productId: metadata.productId ?? "",
         productName: metadata.productName ?? "",
         length: metadata.length ?? "",
@@ -75,8 +77,11 @@ export async function POST(request: NextRequest) {
 
     if (!alreadyExisted) {
       try {
+        const categoryLabel =
+          PRODUCT_CATEGORIES.find((c) => c.slug === metadata.category)?.label ?? "Hair";
         await sendOrderConfirmationEmails({
           productName: metadata.productName ?? "",
+          categoryLabel,
           length: metadata.length ?? "",
           texture: metadata.texture ?? "",
           lace: metadata.lace ?? "",

@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
       customer_email: customerEmail,
       metadata: {
         type: "wig-order",
+        category: product.category,
         productId: product.id,
         productName: product.name,
         variantId: variant.id,

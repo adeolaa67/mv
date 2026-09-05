@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { PRODUCT_CATEGORIES } from "@/lib/wigProducts";
 
 type Order = {
   id: string;
+  category: string;
   productName: string;
   length: string;
   texture: string;
@@ -62,6 +64,9 @@ export default function OrdersList() {
       ) : (
         orders.map((order) => (
           <div key={order.id} className="space-y-1 border-t border-hairline pt-4 text-sm first:border-t-0 first:pt-0">
+            <p className="text-xs uppercase tracking-widest text-bronze">
+              {PRODUCT_CATEGORIES.find((c) => c.slug === order.category)?.label ?? "Hair"}
+            </p>
             <p className="font-medium">
               {order.quantity} × {order.productName} — {order.length}, {order.texture}, {order.lace}
             </p>

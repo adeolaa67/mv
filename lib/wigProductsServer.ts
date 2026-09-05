@@ -1,19 +1,19 @@
+import { randomUUID } from "crypto";
 import { getAdminDb } from "./firebaseAdmin";
-import { WigProduct, WIG_PRODUCT_IDS } from "./wigProducts";
-
-function defaultProduct(id: string): WigProduct {
-  return { id, name: `Wig ${id}`, description: "", imageUrl: "", variants: [] };
-}
+import { WigProduct, ProductCategorySlug } from "./wigProducts";
 
 // Firestore's doc.data() can include a Timestamp (updatedAt) — a class
 // instance, not a plain object, which Next.js refuses to pass from a server
 // component to a client component. Pick only the plain fields WigProduct
 // actually needs instead of spreading the raw doc data.
-function toProduct(id: string, data: Record<string, unknown> | undefined): WigProduct {
-  if (!data) return defaultProduct(id);
+function toProduct(id: string, data: Record<string, unknown> | undefined): WigProduct | null {
+  if (!data) return null;
+  const category: ProductCategorySlug =
+    data.category === "bundles" || data.category === "lace-services" ? data.category : "wigs";
   return {
     id,
-    name: typeof data.name === "string" ? data.name : `Wig ${id}`,
+    category,
+    name: typeof data.name === "string" ? data.name : "",
     description: typeof data.description === "string" ? data.description : "",
     imageUrl: typeof data.imageUrl === "string" ? data.imageUrl : "",
     variants: Array.isArray(data.variants) ? data.variants : [],
@@ -23,21 +23,36 @@ function toProduct(id: string, data: Record<string, unknown> | undefined): WigPr
 export async function getWigProducts(): Promise<WigProduct[]> {
   try {
     const snapshot = await getAdminDb().collection("wigProducts").get();
-    const byId = new Map(snapshot.docs.map((doc) => [doc.id, doc.data()]));
-    return WIG_PRODUCT_IDS.map((id) => toProduct(id, byId.get(id)));
+    return snapshot.docs
+      .map((doc) => toProduct(doc.id, doc.data()))
+      .filter((p): p is WigProduct => p !== null)
+      .sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error("Failed to read wig products from Firestore:", error);
-    return WIG_PRODUCT_IDS.map(defaultProduct);
+    return [];
   }
 }
 
 export async function getWigProduct(id: string): Promise<WigProduct | null> {
-  if (!WIG_PRODUCT_IDS.includes(id)) return null;
   try {
     const doc = await getAdminDb().collection("wigProducts").doc(id).get();
-    return toProduct(id, doc.data());
+    return toProduct(doc.id, doc.data());
   } catch (error) {
     console.error("Failed to read wig product from Firestore:", error);
-    return defaultProduct(id);
+    return null;
   }
+}
+
+export async function createWigProduct(category: ProductCategorySlug): Promise<WigProduct> {
+  const id = randomUUID();
+  const product: WigProduct = { id, category, name: "", description: "", imageUrl: "", variants: [] };
+  await getAdminDb()
+    .collection("wigProducts")
+    .doc(id)
+    .set({ category, name: "", description: "", imageUrl: "", variants: [], updatedAt: new Date() });
+  return product;
+}
+
+export async function deleteWigProduct(id: string): Promise<void> {
+  await getAdminDb().collection("wigProducts").doc(id).delete();
 }

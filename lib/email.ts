@@ -71,6 +71,7 @@ export async function sendBookingConfirmationEmails(booking: BookingConfirmation
 
 type OrderConfirmation = {
   productName: string;
+  categoryLabel: string;
   length: string;
   texture: string;
   lace: string;
@@ -83,7 +84,7 @@ type OrderConfirmation = {
 export async function sendOrderConfirmationEmails(order: OrderConfirmation) {
   const resend = getResend();
   const from = getFromAddress();
-  const summary = `${order.quantity} x ${order.productName} — ${order.length}, ${order.texture}, ${order.lace}`;
+  const summary = `${order.quantity} x ${order.productName} (${order.categoryLabel}) — ${order.length}, ${order.texture}, ${order.lace}`;
   const total = `£${(order.totalPence / 100).toFixed(2)}`;
 
   await resend.emails.send({

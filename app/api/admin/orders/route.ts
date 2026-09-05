@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
       const data = doc.data();
       return {
         id: doc.id,
+        category: data.category ?? "",
         productName: data.productName ?? "",
         length: data.length ?? "",
         texture: data.texture ?? "",

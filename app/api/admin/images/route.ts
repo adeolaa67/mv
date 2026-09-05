@@ -4,9 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/adminSession";
 import { getAdminDb } from "@/lib/firebaseAdmin";
 import { siteContent } from "@/lib/content";
-import { getGalleryEntries, getServiceImages, getStylistAvatarOverride } from "@/lib/siteImages";
+import { getGalleryEntries, getServiceImages, getStylistAvatarOverride, getShopBannerImage } from "@/lib/siteImages";
 import { AUTO_GALLERY_REVIEWS } from "@/lib/galleryReviewPool";
-import { WIG_PRODUCT_IDS } from "@/lib/wigProducts";
 
 async function requireAdmin(request: NextRequest) {
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
@@ -27,15 +26,17 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const [gallery, services, stylistAvatar] = await Promise.all([
+    const [gallery, services, stylistAvatar, shopBanner] = await Promise.all([
       getGalleryEntries(),
       getServiceImages(),
       getStylistAvatarOverride(),
+      getShopBannerImage(),
     ]);
     return NextResponse.json({
       gallery,
       services: siteContent.categories.map((c, i) => ({ slug: c.slug, name: c.name, url: services[i] })),
       stylistAvatar,
+      shopBanner,
     });
   } catch (error) {
     console.error("Failed to load site images:", error);
@@ -98,12 +99,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, url });
     }
 
+    if (target === "shopBanner") {
+      await docRef.set({ shopBanner: url }, { merge: true });
+      return NextResponse.json({ ok: true, url });
+    }
+
     if (target === "wigProduct") {
       const productId = String(formData.get("productId") ?? "");
-      if (!WIG_PRODUCT_IDS.includes(productId)) {
+      const productDoc = await db.collection("wigProducts").doc(productId).get();
+      if (!productDoc.exists) {
         return NextResponse.json({ error: "Unknown product." }, { status: 400 });
       }
-      await db.collection("wigProducts").doc(productId).set({ imageUrl: url }, { merge: true });
+      await productDoc.ref.set({ imageUrl: url }, { merge: true });
       return NextResponse.json({ ok: true, url });
     }
 

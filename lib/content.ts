@@ -18,9 +18,9 @@ export const siteContent: SiteContent = {
     { label: "Sun", time: "Closed" },
   ],
   contact: [
-    { icon: "instagram", label: "@mvhairuk", href: "https://instagram.com/mvhairuk" },
-    { icon: "tiktok", label: "@mvhairuk", href: "https://tiktok.com/@mvhairuk" },
-    { icon: "mail", label: "mvhairuk@gmail.com", href: "mailto:mvhairuk@gmail.com" },
+    { icon: "instagram", label: "@byadebless", href: "https://instagram.com/byadebless" },
+    { icon: "tiktok", label: "@byadebless", href: "https://tiktok.com/@byadebless" },
+    { icon: "mail", label: "byadebless@gmail.com", href: "mailto:byadebless@gmail.com" },
     { icon: "phone", label: "07359 323852", href: "tel:+447359323852" },
   ],
   policies: [
@@ -161,7 +161,7 @@ export const siteContent: SiteContent = {
     },
   ],
   shop: {
-    heading: "Shop Our Wigs",
-    intro: "Browse our wig collection below — pick a length, texture, and lace type, then checkout securely.",
+    heading: "Shop Our Hair",
+    intro: "Browse Wigs, Bundles, and Lace Services below — pick a length, texture, and lace type, then checkout securely.",
   },
 };

@@ -1,5 +1,5 @@
 import { getEffectiveSiteContent } from "@/lib/siteContentOverrides";
-import { getGalleryEntries, getServiceImages, getStylistAvatarOverride } from "@/lib/siteImages";
+import { getGalleryEntries, getServiceImages, getStylistAvatarOverride, getShopBannerImage } from "@/lib/siteImages";
 import { getUnavailableDates, getBookedSlotsByDate } from "@/lib/availability";
 import { getServicePrices } from "@/lib/prices";
 import { getBookingSlots, getAllDateSlotOverrides } from "@/lib/slots";
@@ -13,6 +13,7 @@ import Services from "@/components/Services";
 import HairPurchaseGuide from "@/components/HairPurchaseGuide";
 import CtaBanner from "@/components/CtaBanner";
 import BookingCalendar from "@/components/BookingCalendar";
+import ShopHairBanner from "@/components/ShopHairBanner";
 
 // Blocked dates come from Firestore and can change at any time (admin
 // blocking a date), so this page can't be statically prerendered.
@@ -30,6 +31,7 @@ export default async function Home() {
   );
   const serviceImages = await getServiceImages();
   const stylistAvatarOverride = await getStylistAvatarOverride();
+  const shopBannerImage = await getShopBannerImage();
   const unavailableDates = await getUnavailableDates();
   const bookedSlotsByDate = await getBookedSlotsByDate();
   const pricesPence = await getServicePrices();
@@ -56,6 +58,7 @@ export default async function Home() {
         pricesPence={pricesPence}
       />
       <HairPurchaseGuide steps={purchaseGuide} />
+      <ShopHairBanner imageUrl={shopBannerImage} />
       <CtaBanner label="Choose your appointment below" href="#calendar" />
       <BookingCalendar
         id="calendar"

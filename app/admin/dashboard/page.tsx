@@ -72,7 +72,8 @@ export default function AdminDashboardPage() {
       </div>
 
       <p className="mx-auto mt-10 max-w-2xl text-sm text-ink/60">
-        Hair Shop — the 4 wigs for sale, with photo, description, and
+        Hair Shop — Wigs, Bundles, and Lace Services tabs, add or remove as
+        many products as you like in each, with photo, description, and
         length/texture/lace variants each priced individually.
       </p>
       <div className="mx-auto mt-4 max-w-2xl">
