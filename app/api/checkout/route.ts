@@ -20,7 +20,6 @@ type CheckoutBody = {
   date?: string;
   slot?: string;
   categorySlug?: string;
-  subOptions?: string[];
   addOnIds?: string[];
   customerName?: string;
   customerEmail?: string;
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const { date, slot, categorySlug, subOptions, addOnIds, customerName, customerEmail, customerPhone } = body;
+  const { date, slot, categorySlug, addOnIds, customerName, customerEmail, customerPhone } = body;
 
   if (!date || !ISO_DATE.test(date)) {
     return NextResponse.json({ error: "date must be yyyy-mm-dd." }, { status: 400 });
@@ -45,15 +44,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid slot." }, { status: 400 });
   }
   const category = siteContent.categories.find((c) => c.slug === categorySlug);
-  if (
-    !category ||
-    !Array.isArray(subOptions) ||
-    subOptions.length === 0 ||
-    !subOptions.every((o) => category.options.includes(o))
-  ) {
-    return NextResponse.json({ error: "Invalid category or option." }, { status: 400 });
+  if (!category) {
+    return NextResponse.json({ error: "Invalid category." }, { status: 400 });
   }
-  const subOptionsLabel = subOptions.join(", ");
+  const subOptionsLabel = category.name;
   if (!customerName?.trim() || !customerEmail?.trim() || !customerPhone?.trim()) {
     return NextResponse.json({ error: "Name, email, and phone are required." }, { status: 400 });
   }

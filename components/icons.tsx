@@ -94,6 +94,24 @@ export function CalendarIcon(props: IconProps) {
   );
 }
 
+export function FullscreenIcon({ active, ...props }: IconProps & { active?: boolean }) {
+  return active ? (
+    <svg viewBox="0 0 24 24" width={18} height={18} {...base} {...props}>
+      <path d="M9 4.5H4.5V9" />
+      <path d="M15 4.5h4.5V9" />
+      <path d="M9 19.5H4.5V15" />
+      <path d="M15 19.5h4.5V15" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" width={18} height={18} {...base} {...props}>
+      <path d="M4.5 9V4.5H9" />
+      <path d="M19.5 9V4.5H15" />
+      <path d="M4.5 15v4.5H9" />
+      <path d="M19.5 15v4.5H15" />
+    </svg>
+  );
+}
+
 export function CategoryIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" width={22} height={22} {...base} {...props}>

@@ -21,14 +21,15 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [burst, setBurst] = useState<Burst>(null);
   const [length, setLength] = useState("");
-  const [texture, setTexture] = useState("");
   const [lace, setLace] = useState("");
+  const [textureId, setTextureId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageFullscreen, setImageFullscreen] = useState(false);
 
   const activeProduct = products.find((p) => p.id === activeId) ?? null;
 
@@ -36,33 +37,27 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
     () => (activeProduct ? uniqueInOrder(activeProduct.variants.map((v) => v.length)) : []),
     [activeProduct],
   );
-  const textures = useMemo(
-    () =>
-      activeProduct
-        ? uniqueInOrder(activeProduct.variants.filter((v) => v.length === length).map((v) => v.texture))
-        : [],
-    [activeProduct, length],
-  );
   const laces = useMemo(
     () =>
       activeProduct
-        ? uniqueInOrder(
-            activeProduct.variants.filter((v) => v.length === length && v.texture === texture).map((v) => v.lace),
-          )
+        ? uniqueInOrder(activeProduct.variants.filter((v) => v.length === length).map((v) => v.lace))
         : [],
-    [activeProduct, length, texture],
+    [activeProduct, length],
   );
-  const matchedVariant = activeProduct?.variants.find(
-    (v) => v.length === length && v.texture === texture && v.lace === lace,
-  );
-  const totalPence = matchedVariant ? matchedVariant.pricePence * quantity : undefined;
+  const matchedVariant = activeProduct?.variants.find((v) => v.length === length && v.lace === lace);
+  const textures = activeProduct?.textures ?? [];
+  const selectedTexture = textures.find((t) => t.id === textureId) ?? null;
+  const needsTexture = textures.length > 0;
+  const canCheckout = Boolean(matchedVariant) && (!needsTexture || Boolean(selectedTexture));
+  const unitPence = matchedVariant ? matchedVariant.pricePence + (selectedTexture?.extraPricePence ?? 0) : undefined;
+  const totalPence = unitPence != null ? unitPence * quantity : undefined;
 
   function openProduct(id: string, e: React.MouseEvent) {
     setBurst({ x: e.clientX, y: e.clientY });
     setActiveId(id);
     setLength("");
-    setTexture("");
     setLace("");
+    setTextureId("");
     setQuantity(1);
     setError(null);
   }
@@ -72,6 +67,7 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
     setCustomerName("");
     setCustomerEmail("");
     setCustomerPhone("");
+    setImageFullscreen(false);
   }
 
   async function handleCheckout() {
@@ -85,6 +81,7 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
         body: JSON.stringify({
           productId: activeProduct.id,
           variantId: matchedVariant.id,
+          textureId: selectedTexture?.id,
           quantity,
           customerName,
           customerEmail,
@@ -114,7 +111,7 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
             key={c.slug}
             type="button"
             onClick={() => setActiveCategory(c.slug)}
-            className={`border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${
+            className={`pop-click border px-4 py-2 text-xs uppercase tracking-widest transition-colors ${
               activeCategory === c.slug
                 ? "border-bronze bg-bronze text-cream"
                 : "border-hairline text-ink/60 hover:border-bronze hover:text-bronze"
@@ -139,15 +136,15 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
                 key={product.id}
                 type="button"
                 onClick={(e) => openProduct(product.id, e)}
-                className="border border-hairline text-center transition-colors hover:bg-ink/5"
+                className="pop-click border border-hairline text-center transition-colors hover:bg-ink/5"
               >
-                <div className="h-40 w-full overflow-hidden sm:h-56">
+                <div className="h-52 w-full overflow-hidden sm:h-64">
                   <Image
                     src={product.imageUrl}
                     alt={product.name}
-                    width={300}
-                    height={300}
-                    className="h-full w-full object-cover"
+                    width={400}
+                    height={400}
+                    className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                   />
                 </div>
                 <div className="px-4 py-5">
@@ -183,20 +180,25 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
               type="button"
               onClick={closeProduct}
               aria-label="Close"
-              className="absolute right-4 top-3 text-2xl text-ink/60 hover:text-bronze"
+              className="pop-click absolute right-4 top-3 text-2xl text-ink/60 hover:text-bronze"
             >
               &times;
             </button>
 
-            <div className="h-56 w-full overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setImageFullscreen(true)}
+              aria-label="View photo fullscreen"
+              className="pop-click block h-72 w-full cursor-zoom-in overflow-hidden sm:h-80"
+            >
               <Image
                 src={activeProduct.imageUrl}
                 alt={activeProduct.name}
-                width={500}
-                height={400}
-                className="h-full w-full object-cover"
+                width={600}
+                height={480}
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
               />
-            </div>
+            </button>
 
             <p className="mt-4 text-center font-display text-xl">{activeProduct.name}</p>
             <p className="mt-2 text-center text-sm leading-relaxed text-ink/70">{activeProduct.description}</p>
@@ -208,7 +210,6 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
                   value={length}
                   onChange={(e) => {
                     setLength(e.target.value);
-                    setTexture("");
                     setLace("");
                   }}
                   className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
@@ -224,27 +225,6 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
 
               {length && (
                 <label className="block">
-                  <span className="text-xs uppercase tracking-widest text-ink/60">Texture</span>
-                  <select
-                    value={texture}
-                    onChange={(e) => {
-                      setTexture(e.target.value);
-                      setLace("");
-                    }}
-                    className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
-                  >
-                    <option value="">Choose a texture…</option>
-                    {textures.map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-
-              {length && texture && (
-                <label className="block">
                   <span className="text-xs uppercase tracking-widest text-ink/60">Lace</span>
                   <select
                     value={lace}
@@ -259,6 +239,31 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
                     ))}
                   </select>
                 </label>
+              )}
+
+              {matchedVariant && textures.length > 0 && (
+                <div className="block">
+                  <span className="text-xs uppercase tracking-widest text-ink/60">Texture</span>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {textures.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setTextureId(t.id)}
+                        className={`pop-click border px-3 py-2 text-xs transition-colors ${
+                          textureId === t.id
+                            ? "border-bronze bg-bronze text-cream"
+                            : "border-hairline text-ink/70 hover:border-bronze hover:text-bronze"
+                        }`}
+                      >
+                        {t.name}
+                        <span className={`ml-1.5 ${textureId === t.id ? "text-cream/80" : "text-ink/50"}`}>
+                          {t.extraPricePence > 0 ? `+£${(t.extraPricePence / 100).toFixed(2)}` : "Free"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {matchedVariant && (
@@ -310,10 +315,10 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
                   <button
                     type="button"
                     disabled={
-                      !customerName.trim() || !customerEmail.trim() || !customerPhone.trim() || submitting
+                      !canCheckout || !customerName.trim() || !customerEmail.trim() || !customerPhone.trim() || submitting
                     }
                     onClick={handleCheckout}
-                    className="w-full border border-hairline py-2 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
+                    className="pop-click w-full border border-hairline py-2 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
                   >
                     {submitting
                       ? "Redirecting to payment…"
@@ -325,6 +330,31 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {imageFullscreen && activeProduct && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setImageFullscreen(false)}
+          className="fade-scale-in fixed inset-0 z-[70] flex items-center justify-center bg-ink/95 p-4"
+        >
+          <button
+            type="button"
+            onClick={() => setImageFullscreen(false)}
+            aria-label="Close"
+            className="pop-click absolute right-4 top-4 text-3xl text-cream/80 hover:text-bronze"
+          >
+            &times;
+          </button>
+          <Image
+            src={activeProduct.imageUrl}
+            alt={activeProduct.name}
+            width={1200}
+            height={1200}
+            className="max-h-full max-w-full object-contain"
+          />
         </div>
       )}
     </section>

@@ -8,7 +8,10 @@ export const PRODUCT_CATEGORIES: { slug: ProductCategorySlug; label: string }[] 
   { slug: "lace-services", label: "Lace Services" },
 ];
 
-export type WigVariant = { id: string; length: string; texture: string; lace: string; pricePence: number };
+export type WigVariant = { id: string; length: string; lace: string; pricePence: number };
+// A texture is picked independently of length/lace — e.g. "Straight" (free)
+// or "Water Wave" (+£3) — so adding one never requires new length/lace rows.
+export type WigTexture = { id: string; name: string; extraPricePence: number };
 export type WigProduct = {
   id: string;
   category: ProductCategorySlug;
@@ -16,6 +19,7 @@ export type WigProduct = {
   description: string;
   imageUrl: string;
   variants: WigVariant[];
+  textures: WigTexture[];
 };
 
 export function minPricePence(product: WigProduct): number | null {

@@ -13,6 +13,7 @@ function getStripe() {
 type ShopCheckoutBody = {
   productId?: string;
   variantId?: string;
+  textureId?: string;
   quantity?: number;
   customerName?: string;
   customerEmail?: string;
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
-  const { productId, variantId, quantity, customerName, customerEmail, customerPhone } = body;
+  const { productId, variantId, textureId, quantity, customerName, customerEmail, customerPhone } = body;
 
   if (!productId) {
     return NextResponse.json({ error: "Invalid product." }, { status: 400 });
@@ -44,6 +45,13 @@ export async function POST(request: NextRequest) {
   if (!product || !variant) {
     return NextResponse.json({ error: "That wig option is no longer available." }, { status: 409 });
   }
+  // A texture is only mandatory when the product actually has some defined —
+  // older/simpler products with no texture list skip this entirely.
+  const texture = product.textures.length > 0 ? product.textures.find((t) => t.id === textureId) : undefined;
+  if (product.textures.length > 0 && !texture) {
+    return NextResponse.json({ error: "That texture option is no longer available." }, { status: 409 });
+  }
+  const unitAmount = variant.pricePence + (texture?.extraPricePence ?? 0);
 
   try {
     const session = await getStripe().checkout.sessions.create({
@@ -55,9 +63,9 @@ export async function POST(request: NextRequest) {
           quantity,
           price_data: {
             currency: "gbp",
-            unit_amount: variant.pricePence,
+            unit_amount: unitAmount,
             product_data: {
-              name: `${product.name} — ${variant.length}, ${variant.texture}, ${variant.lace}`,
+              name: `${product.name} — ${[variant.length, texture?.name, variant.lace].filter(Boolean).join(", ")}`,
             },
           },
         },
@@ -70,7 +78,7 @@ export async function POST(request: NextRequest) {
         productName: product.name,
         variantId: variant.id,
         length: variant.length,
-        texture: variant.texture,
+        texture: texture?.name ?? "",
         lace: variant.lace,
         quantity: String(quantity),
         customerName,

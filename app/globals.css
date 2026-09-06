@@ -211,6 +211,34 @@ body {
   animation: butterfly-fly 0.9s ease-out forwards;
 }
 
+/* Generic click feedback for interactive controls — a quick squash on
+   press so clicking anything feels responsive, not just links/buttons that
+   already have a hover color change. */
+.pop-click {
+  transition: transform 150ms ease;
+}
+
+.pop-click:active {
+  transform: scale(0.93);
+}
+
+/* Fullscreen image/panel viewers: fade + scale up from the trigger, instead
+   of just snapping to full size. */
+@keyframes fade-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.fade-scale-in {
+  animation: fade-scale-in 0.25s ease-out forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

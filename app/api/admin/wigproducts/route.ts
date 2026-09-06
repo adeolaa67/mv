@@ -3,7 +3,7 @@ import { del } from "@vercel/blob";
 import { NextRequest, NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/adminSession";
 import { getAdminDb } from "@/lib/firebaseAdmin";
-import { PRODUCT_CATEGORIES, ProductCategorySlug, WigVariant } from "@/lib/wigProducts";
+import { PRODUCT_CATEGORIES, ProductCategorySlug, WigVariant, WigTexture } from "@/lib/wigProducts";
 import { createWigProduct, deleteWigProduct, getWigProduct, getWigProducts } from "@/lib/wigProductsServer";
 
 async function requireAdmin(request: NextRequest) {
@@ -54,14 +54,21 @@ export async function POST(request: NextRequest) {
   }
 }
 
-type IncomingVariant = { id?: string; length?: string; texture?: string; lace?: string; pricePence?: number };
+type IncomingVariant = { id?: string; length?: string; lace?: string; pricePence?: number };
+type IncomingTexture = { id?: string; name?: string; extraPricePence?: number };
 
 export async function PUT(request: NextRequest) {
   if (!(await requireAdmin(request))) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
   }
 
-  let body: { id?: string; name?: string; description?: string; variants?: IncomingVariant[] };
+  let body: {
+    id?: string;
+    name?: string;
+    description?: string;
+    variants?: IncomingVariant[];
+    textures?: IncomingTexture[];
+  };
   try {
     body = await request.json();
   } catch {
@@ -86,8 +93,6 @@ export async function PUT(request: NextRequest) {
     if (
       typeof v.length !== "string" ||
       !v.length.trim() ||
-      typeof v.texture !== "string" ||
-      !v.texture.trim() ||
       typeof v.lace !== "string" ||
       !v.lace.trim() ||
       typeof v.pricePence !== "number" ||
@@ -95,7 +100,26 @@ export async function PUT(request: NextRequest) {
       v.pricePence <= 0
     ) {
       return NextResponse.json(
-        { error: "Each variant needs a length, texture, lace, and a price greater than £0." },
+        { error: "Each variant needs a length, lace, and a price greater than £0." },
+        { status: 400 },
+      );
+    }
+  }
+
+  const textures = body.textures ?? [];
+  if (!Array.isArray(textures) || textures.length > 50) {
+    return NextResponse.json({ error: "Invalid texture list." }, { status: 400 });
+  }
+  for (const t of textures) {
+    if (
+      typeof t.name !== "string" ||
+      !t.name.trim() ||
+      typeof t.extraPricePence !== "number" ||
+      !Number.isFinite(t.extraPricePence) ||
+      t.extraPricePence < 0
+    ) {
+      return NextResponse.json(
+        { error: "Each texture needs a name and an extra price of £0 or more." },
         { status: 400 },
       );
     }
@@ -104,9 +128,14 @@ export async function PUT(request: NextRequest) {
   const normalizedVariants: WigVariant[] = variants.map((v) => ({
     id: v.id && v.id.trim() ? v.id : randomUUID(),
     length: v.length!.trim(),
-    texture: v.texture!.trim(),
     lace: v.lace!.trim(),
     pricePence: Math.round(v.pricePence!),
+  }));
+
+  const normalizedTextures: WigTexture[] = textures.map((t) => ({
+    id: t.id && t.id.trim() ? t.id : randomUUID(),
+    name: t.name!.trim(),
+    extraPricePence: Math.round(t.extraPricePence!),
   }));
 
   try {
@@ -116,11 +145,12 @@ export async function PUT(request: NextRequest) {
         name: body.name.trim(),
         description: (body.description ?? "").trim(),
         variants: normalizedVariants,
+        textures: normalizedTextures,
         updatedAt: new Date(),
       },
       { merge: true },
     );
-    return NextResponse.json({ ok: true, variants: normalizedVariants });
+    return NextResponse.json({ ok: true, variants: normalizedVariants, textures: normalizedTextures });
   } catch (error) {
     console.error("Failed to save wig product:", error);
     return NextResponse.json({ error: "Failed to save wig product." }, { status: 500 });

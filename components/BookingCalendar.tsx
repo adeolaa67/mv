@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CalendarIcon } from "./icons";
+import { CalendarIcon, FullscreenIcon } from "./icons";
 import { ServiceCategory } from "@/lib/types";
 import { AddOn } from "@/lib/addOns";
 
@@ -45,13 +45,13 @@ export default function BookingCalendar({
   const [shaking, setShaking] = useState<string | null>(null);
   const [slot, setSlot] = useState<string | null>(null);
   const [categorySlug, setCategorySlug] = useState("");
-  const [selectedSubOptions, setSelectedSubOptions] = useState<string[]>([]);
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const selectedCategory = categories.find((c) => c.slug === categorySlug);
@@ -92,7 +92,6 @@ export default function BookingCalendar({
     }
     setSlot(null);
     setCategorySlug("");
-    setSelectedSubOptions([]);
     setSelectedAddOnIds([]);
     setError(null);
     setFocusedDate(iso);
@@ -102,7 +101,6 @@ export default function BookingCalendar({
     setFocusedDate(null);
     setSlot(null);
     setCategorySlug("");
-    setSelectedSubOptions([]);
     setSelectedAddOnIds([]);
     setError(null);
   }
@@ -110,14 +108,12 @@ export default function BookingCalendar({
   function handleSelectSlot(s: string) {
     setSlot(s);
     setCategorySlug("");
-    setSelectedSubOptions([]);
     setSelectedAddOnIds([]);
     setError(null);
   }
 
   function handleSelectCategory(slug: string) {
     setCategorySlug(slug);
-    setSelectedSubOptions([]);
     setSelectedAddOnIds([]);
   }
 
@@ -127,14 +123,8 @@ export default function BookingCalendar({
     );
   }
 
-  function toggleSubOption(option: string) {
-    setSelectedSubOptions((prev) =>
-      prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option],
-    );
-  }
-
   async function handleBook() {
-    if (!focusedDate || !slot || !categorySlug || selectedSubOptions.length === 0) return;
+    if (!focusedDate || !slot || !categorySlug) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -145,7 +135,6 @@ export default function BookingCalendar({
           date: focusedDate,
           slot,
           categorySlug,
-          subOptions: selectedSubOptions,
           addOnIds: selectedAddOnIds,
           customerName,
           customerEmail,
@@ -178,8 +167,19 @@ export default function BookingCalendar({
 
       <div
         ref={cardRef}
-        className="relative mx-auto min-h-[420px] max-w-2xl overflow-hidden border border-hairline bg-white/40 px-6 py-8"
+        className={`relative mx-auto overflow-hidden border border-hairline bg-white/40 px-6 py-8 transition-all duration-300 ${
+          fullscreen ? "fixed inset-4 z-[60] overflow-y-auto sm:inset-8" : "min-h-[420px] max-w-2xl"
+        }`}
       >
+        <button
+          type="button"
+          onClick={() => setFullscreen((f) => !f)}
+          aria-label={fullscreen ? "Exit fullscreen" : "View fullscreen"}
+          className="pop-click absolute right-3 top-3 z-10 text-ink/50 hover:text-bronze"
+        >
+          <FullscreenIcon active={fullscreen} />
+        </button>
+
         <div
           style={{ transformOrigin: zoomOrigin }}
           className={`transition-all duration-500 ease-in ${
@@ -187,11 +187,11 @@ export default function BookingCalendar({
           }`}
         >
           <div className="mb-4 flex items-center justify-between">
-            <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month">
+            <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="pop-click">
               ‹
             </button>
             <span className="font-display text-sm uppercase tracking-widest2">{monthLabel}</span>
-            <button type="button" onClick={() => changeMonth(1)} aria-label="Next month">
+            <button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="pop-click">
               ›
             </button>
           </div>
@@ -215,7 +215,7 @@ export default function BookingCalendar({
                   key={day}
                   type="button"
                   onClick={(e) => handleDayClick(e, iso, isPast, isUnavailable)}
-                  className={`py-2 transition-colors ${
+                  className={`pop-click py-2 transition-colors ${
                     isPast
                       ? "cursor-not-allowed text-ink/25"
                       : isUnavailable
@@ -251,7 +251,7 @@ export default function BookingCalendar({
                     type="button"
                     disabled={isTaken}
                     onClick={() => handleSelectSlot(s)}
-                    className={`border border-hairline py-2 text-sm transition-colors ${
+                    className={`pop-click border border-hairline py-2 text-sm transition-colors ${
                       isTaken
                         ? "cursor-not-allowed text-ink/25 line-through"
                         : slot === s
@@ -284,39 +284,14 @@ export default function BookingCalendar({
                   </select>
                 </label>
 
-                {selectedCategory && (
+                {selectedCategory && availableAddOns.length > 0 && (
                   <div className="block">
-                    <span className="text-xs uppercase tracking-widest text-ink/60">
-                      Sub-category
-                    </span>
-                    <div className="mt-1 space-y-1">
-                      {selectedCategory.options.map((option) => (
-                        <label
-                          key={option}
-                          className="flex cursor-pointer items-center gap-2 border border-hairline px-3 py-2 text-sm"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedSubOptions.includes(option)}
-                            onChange={() => toggleSubOption(option)}
-                          />
-                          {option}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedSubOptions.length > 0 && availableAddOns.length > 0 && (
-                  <div className="block">
-                    <span className="text-xs uppercase tracking-widest text-ink/60">
-                      Add extras
-                    </span>
+                    <span className="text-xs uppercase tracking-widest text-ink/60">Extra</span>
                     <div className="mt-1 space-y-1">
                       {availableAddOns.map((addOn) => (
                         <label
                           key={addOn.id}
-                          className="flex cursor-pointer items-center justify-between border border-hairline px-3 py-2 text-sm"
+                          className="pop-click flex cursor-pointer items-center justify-between border border-hairline px-3 py-2 text-sm"
                         >
                           <span className="flex items-center gap-2">
                             <input
@@ -335,7 +310,7 @@ export default function BookingCalendar({
                   </div>
                 )}
 
-                {selectedSubOptions.length > 0 && (
+                {categorySlug && (
                   <>
                     <label className="block">
                       <span className="text-xs uppercase tracking-widest text-ink/60">Name</span>
@@ -370,7 +345,7 @@ export default function BookingCalendar({
                   </>
                 )}
 
-                {selectedSubOptions.length > 0 && !selectedPricePence && (
+                {categorySlug && !selectedPricePence && (
                   <p className="text-sm text-ink/60">
                     Pricing for this service isn&apos;t set up yet — please contact us directly to book.
                   </p>
@@ -381,7 +356,7 @@ export default function BookingCalendar({
                 <button
                   type="button"
                   disabled={
-                    selectedSubOptions.length === 0 ||
+                    !categorySlug ||
                     !selectedPricePence ||
                     !customerName.trim() ||
                     !customerEmail.trim() ||
@@ -389,7 +364,7 @@ export default function BookingCalendar({
                     submitting
                   }
                   onClick={handleBook}
-                  className="w-full border border-hairline py-2 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
+                  className="pop-click w-full border border-hairline py-2 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
                 >
                   {submitting
                     ? "Redirecting to payment…"
@@ -403,7 +378,7 @@ export default function BookingCalendar({
             <button
               type="button"
               onClick={handleBack}
-              className="mx-auto mt-6 block text-xs uppercase tracking-widest text-ink/60 hover:text-bronze"
+              className="pop-click mx-auto mt-6 block text-xs uppercase tracking-widest text-ink/60 hover:text-bronze"
             >
               ‹ Back
             </button>

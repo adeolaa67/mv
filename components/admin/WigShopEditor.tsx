@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { FileInputButton, resizeImageFile } from "./FileInputButton";
-import { PRODUCT_CATEGORIES, ProductCategorySlug, WigProduct, WigVariant } from "@/lib/wigProducts";
+import { PRODUCT_CATEGORIES, ProductCategorySlug, WigProduct, WigVariant, WigTexture } from "@/lib/wigProducts";
 
-type VariantDraft = { id: string; length: string; texture: string; lace: string; price: string };
+type VariantDraft = { id: string; length: string; lace: string; price: string };
+type TextureDraft = { id: string; name: string; extraPrice: string };
 type ProductDraft = {
   id: string;
   category: ProductCategorySlug;
@@ -13,6 +14,7 @@ type ProductDraft = {
   description: string;
   imageUrl: string;
   variants: VariantDraft[];
+  textures: TextureDraft[];
 };
 
 function toDraft(p: WigProduct): ProductDraft {
@@ -25,9 +27,13 @@ function toDraft(p: WigProduct): ProductDraft {
     variants: p.variants.map((v) => ({
       id: v.id,
       length: v.length,
-      texture: v.texture,
       lace: v.lace,
       price: (v.pricePence / 100).toFixed(2),
+    })),
+    textures: (p.textures ?? []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      extraPrice: t.extraPricePence > 0 ? (t.extraPricePence / 100).toFixed(2) : "",
     })),
   };
 }
@@ -43,6 +49,7 @@ export default function WigShopEditor() {
   const [uploading, setUploading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [copySource, setCopySource] = useState<Record<string, string>>({});
 
   async function load() {
     setLoading(true);
@@ -67,10 +74,32 @@ export default function WigShopEditor() {
     setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
   }
 
+  // Copies another product's whole variants + textures section over this
+  // one's — ids are stripped so Save assigns fresh ones, and this only
+  // updates the draft, it doesn't save by itself.
+  function copyFrom(targetId: string, sourceId: string) {
+    if (!sourceId) return;
+    const source = products.find((p) => p.id === sourceId);
+    if (!source) return;
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === targetId
+          ? {
+              ...p,
+              variants: source.variants.map((v) => ({ ...v, id: "" })),
+              textures: source.textures.map((t) => ({ ...t, id: "" })),
+            }
+          : p,
+      ),
+    );
+    setError(null);
+    setSavedId(null);
+  }
+
   function addVariant(id: string) {
     setProducts((prev) =>
       prev.map((p) =>
-        p.id === id ? { ...p, variants: [...p.variants, { id: "", length: "", texture: "", lace: "", price: "" }] } : p,
+        p.id === id ? { ...p, variants: [...p.variants, { id: "", length: "", lace: "", price: "" }] } : p,
       ),
     );
   }
@@ -85,6 +114,28 @@ export default function WigShopEditor() {
     setProducts((prev) =>
       prev.map((p) =>
         p.id === id ? { ...p, variants: p.variants.map((v, i) => (i === index ? { ...v, [field]: value } : v)) } : p,
+      ),
+    );
+  }
+
+  function addTexture(id: string) {
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, textures: [...p.textures, { id: "", name: "", extraPrice: "" }] } : p,
+      ),
+    );
+  }
+
+  function removeTexture(id: string, index: number) {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, textures: p.textures.filter((_, i) => i !== index) } : p)),
+    );
+  }
+
+  function updateTexture(id: string, index: number, field: keyof TextureDraft, value: string) {
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, textures: p.textures.map((t, i) => (i === index ? { ...t, [field]: value } : t)) } : p,
       ),
     );
   }
@@ -157,13 +208,25 @@ export default function WigShopEditor() {
     }
     const variants: (Omit<WigVariant, "id"> & { id?: string })[] = [];
     for (const v of draft.variants) {
-      if (!v.length.trim() && !v.texture.trim() && !v.lace.trim() && !v.price.trim()) continue;
+      if (!v.length.trim() && !v.lace.trim() && !v.price.trim()) continue;
       const pounds = Number(v.price);
-      if (!v.length.trim() || !v.texture.trim() || !v.lace.trim() || !Number.isFinite(pounds) || pounds <= 0) {
-        setError("Each variant needs a length, texture, lace, and a price greater than £0.");
+      if (!v.length.trim() || !v.lace.trim() || !Number.isFinite(pounds) || pounds <= 0) {
+        setError("Each variant needs a length, lace, and a price greater than £0.");
         return;
       }
-      variants.push({ id: v.id || undefined, length: v.length.trim(), texture: v.texture.trim(), lace: v.lace.trim(), pricePence: Math.round(pounds * 100) });
+      variants.push({ id: v.id || undefined, length: v.length.trim(), lace: v.lace.trim(), pricePence: Math.round(pounds * 100) });
+    }
+
+    const textures: (Omit<WigTexture, "id"> & { id?: string })[] = [];
+    for (const t of draft.textures) {
+      if (!t.name.trim()) continue;
+      // Blank extra price means no upcharge — only validate it when something was typed.
+      const pounds = t.extraPrice.trim() === "" ? 0 : Number(t.extraPrice);
+      if (!Number.isFinite(pounds) || pounds < 0) {
+        setError(`"${t.name}" has an invalid extra price.`);
+        return;
+      }
+      textures.push({ id: t.id || undefined, name: t.name.trim(), extraPricePence: Math.round(pounds * 100) });
     }
 
     setSaving(id);
@@ -173,7 +236,7 @@ export default function WigShopEditor() {
       const response = await fetch("/api/admin/wigproducts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, name: draft.name, description: draft.description, variants }),
+        body: JSON.stringify({ id, name: draft.name, description: draft.description, variants, textures }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error ?? "Failed to save.");
@@ -185,9 +248,13 @@ export default function WigShopEditor() {
                 variants: data.variants.map((v: WigVariant) => ({
                   id: v.id,
                   length: v.length,
-                  texture: v.texture,
                   lace: v.lace,
                   price: (v.pricePence / 100).toFixed(2),
+                })),
+                textures: data.textures.map((t: WigTexture) => ({
+                  id: t.id,
+                  name: t.name,
+                  extraPrice: t.extraPricePence > 0 ? (t.extraPricePence / 100).toFixed(2) : "",
                 })),
               }
             : p,
@@ -220,7 +287,7 @@ export default function WigShopEditor() {
             key={c.slug}
             type="button"
             onClick={() => setActiveCategory(c.slug)}
-            className={`border px-3 py-1.5 text-xs uppercase tracking-widest transition-colors ${
+            className={`border px-3 py-1.5 text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 ${
               activeCategory === c.slug
                 ? "border-bronze bg-bronze text-cream"
                 : "border-hairline text-ink/60 hover:bg-ink/5"
@@ -233,7 +300,8 @@ export default function WigShopEditor() {
 
       <p className="text-xs uppercase tracking-widest text-ink/50">
         Add as many products as you like to {PRODUCT_CATEGORIES.find((c) => c.slug === activeCategory)?.label} —
-        each combination of length, texture, and lace has its own price
+        each combination of length and lace has its own price. Textures (e.g. Straight, Water Wave) are listed
+        separately below and can each carry their own optional extra charge.
       </p>
 
       {error && (
@@ -248,7 +316,7 @@ export default function WigShopEditor() {
 
       {visibleProducts.map((draft) => (
         <div key={draft.id} className="space-y-3 border-t border-hairline pt-6 first:border-t-0 first:pt-0">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-4">
               {draft.imageUrl && (
                 <Image src={draft.imageUrl} alt={draft.name} width={64} height={64} className="h-16 w-16 object-cover" />
@@ -259,6 +327,32 @@ export default function WigShopEditor() {
                 onSelect={(file) => handleUpload(draft.id, file)}
               />
             </div>
+            {visibleProducts.length > 1 && (
+              <div className="flex items-center gap-2">
+                <select
+                  value={copySource[draft.id] ?? ""}
+                  onChange={(e) => setCopySource((prev) => ({ ...prev, [draft.id]: e.target.value }))}
+                  className="border border-hairline bg-transparent px-2 py-1 text-xs"
+                >
+                  <option value="">Copy from…</option>
+                  {visibleProducts
+                    .filter((p) => p.id !== draft.id)
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name || "Untitled product"}
+                      </option>
+                    ))}
+                </select>
+                <button
+                  type="button"
+                  disabled={!copySource[draft.id]}
+                  onClick={() => copyFrom(draft.id, copySource[draft.id])}
+                  className="pop-click border border-hairline px-2 py-1 text-xs uppercase tracking-widest transition-colors hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Copy
+                </button>
+              </div>
+            )}
             {confirmDeleteId === draft.id ? (
               <div className="flex items-center gap-2 text-xs">
                 <span className="text-ink/60">Delete this product?</span>
@@ -303,7 +397,7 @@ export default function WigShopEditor() {
             className="w-full border border-hairline bg-transparent px-3 py-2 text-sm"
           />
 
-          <p className="text-xs uppercase tracking-widest text-ink/50">Variants (length / texture / lace / price)</p>
+          <p className="text-xs uppercase tracking-widest text-ink/50">Variants (length / lace / price)</p>
           {draft.variants.map((v, i) => (
             <div key={i} className="flex flex-wrap items-center gap-2">
               <input
@@ -312,13 +406,6 @@ export default function WigShopEditor() {
                 value={v.length}
                 onChange={(e) => updateVariant(draft.id, i, "length", e.target.value)}
                 className="w-24 border border-hairline bg-transparent px-2 py-1 text-sm"
-              />
-              <input
-                type="text"
-                placeholder="Texture e.g. Straight"
-                value={v.texture}
-                onChange={(e) => updateVariant(draft.id, i, "texture", e.target.value)}
-                className="w-28 border border-hairline bg-transparent px-2 py-1 text-sm"
               />
               <input
                 type="text"
@@ -341,7 +428,47 @@ export default function WigShopEditor() {
                 type="button"
                 onClick={() => removeVariant(draft.id, i)}
                 aria-label="Remove variant"
-                className="text-ink/50 hover:text-red-600"
+                className="text-ink/50 transition-transform active:scale-90 hover:text-red-600"
+              >
+                &times;
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => addVariant(draft.id)}
+            className="border border-hairline px-3 py-1 text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 hover:bg-ink hover:text-cream"
+          >
+            Add variant
+          </button>
+
+          <p className="pt-2 text-xs uppercase tracking-widest text-ink/50">
+            Textures — leave the extra price blank for no upcharge
+          </p>
+          {draft.textures.map((t, i) => (
+            <div key={i} className="flex flex-wrap items-center gap-2">
+              <input
+                type="text"
+                placeholder="Texture e.g. Straight"
+                value={t.name}
+                onChange={(e) => updateTexture(draft.id, i, "name", e.target.value)}
+                className="flex-1 border border-hairline bg-transparent px-2 py-1 text-sm"
+              />
+              <span className="text-sm text-ink/50">+£</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="No extra charge"
+                value={t.extraPrice}
+                onChange={(e) => updateTexture(draft.id, i, "extraPrice", e.target.value)}
+                className="w-32 border border-hairline bg-transparent px-2 py-1 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => removeTexture(draft.id, i)}
+                aria-label="Remove texture"
+                className="text-ink/50 transition-transform active:scale-90 hover:text-red-600"
               >
                 &times;
               </button>
@@ -350,16 +477,16 @@ export default function WigShopEditor() {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => addVariant(draft.id)}
-              className="border border-hairline px-3 py-1 text-xs uppercase tracking-widest transition-colors hover:bg-ink hover:text-cream"
+              onClick={() => addTexture(draft.id)}
+              className="border border-hairline px-3 py-1 text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 hover:bg-ink hover:text-cream"
             >
-              Add variant
+              Add texture
             </button>
             <button
               type="button"
               disabled={saving === draft.id}
               onClick={() => handleSave(draft.id)}
-              className="border border-hairline px-3 py-1 text-xs uppercase tracking-widest transition-colors hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
+              className="border border-hairline px-3 py-1 text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
             >
               {saving === draft.id ? "Saving…" : savedId === draft.id ? "Saved" : "Save"}
             </button>
@@ -372,7 +499,7 @@ export default function WigShopEditor() {
           type="button"
           disabled={creating}
           onClick={handleAddProduct}
-          className="border border-hairline px-4 py-2 text-xs uppercase tracking-widest transition-colors hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
+          className="border border-hairline px-4 py-2 text-xs uppercase tracking-widest transition-all duration-150 active:scale-95 hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
         >
           {creating ? "Adding…" : `+ Add a ${PRODUCT_CATEGORIES.find((c) => c.slug === activeCategory)?.label} product`}
         </button>

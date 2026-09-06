@@ -17,6 +17,7 @@ function toProduct(id: string, data: Record<string, unknown> | undefined): WigPr
     description: typeof data.description === "string" ? data.description : "",
     imageUrl: typeof data.imageUrl === "string" ? data.imageUrl : "",
     variants: Array.isArray(data.variants) ? data.variants : [],
+    textures: Array.isArray(data.textures) ? data.textures : [],
   };
 }
 
@@ -45,11 +46,11 @@ export async function getWigProduct(id: string): Promise<WigProduct | null> {
 
 export async function createWigProduct(category: ProductCategorySlug): Promise<WigProduct> {
   const id = randomUUID();
-  const product: WigProduct = { id, category, name: "", description: "", imageUrl: "", variants: [] };
+  const product: WigProduct = { id, category, name: "", description: "", imageUrl: "", variants: [], textures: [] };
   await getAdminDb()
     .collection("wigProducts")
     .doc(id)
-    .set({ category, name: "", description: "", imageUrl: "", variants: [], updatedAt: new Date() });
+    .set({ category, name: "", description: "", imageUrl: "", variants: [], textures: [], updatedAt: new Date() });
   return product;
 }
 
