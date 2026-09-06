@@ -18,6 +18,7 @@ export type WigProduct = {
   name: string;
   description: string;
   imageUrl: string;
+  videoUrl: string;
   variants: WigVariant[];
   textures: WigTexture[];
 };

@@ -47,10 +47,12 @@ export function FileInputButton({
   label,
   disabled,
   onSelect,
+  accept = "image/jpeg,image/png,image/webp",
 }: {
   label: string;
   disabled?: boolean;
   onSelect: (file: File) => void;
+  accept?: string;
 }) {
   return (
     <label
@@ -61,7 +63,7 @@ export function FileInputButton({
       {label}
       <input
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept={accept}
         disabled={disabled}
         onChange={(e) => {
           const file = e.target.files?.[0];

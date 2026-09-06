@@ -49,6 +49,7 @@ export default async function Home() {
         avatarSrc={stylistAvatarOverride ?? stylist.avatarSrc}
       />
       <Gallery images={galleryImages} reviews={galleryReviews} />
+      <ShopHairBanner imageUrl={shopBannerImage} />
       <BookingPolicies policies={policies} />
       <Services
         services={services}
@@ -58,7 +59,6 @@ export default async function Home() {
         pricesPence={pricesPence}
       />
       <HairPurchaseGuide steps={purchaseGuide} />
-      <ShopHairBanner imageUrl={shopBannerImage} />
       <CtaBanner label="Choose your appointment below" href="#calendar" />
       <BookingCalendar
         id="calendar"

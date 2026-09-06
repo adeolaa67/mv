@@ -13,6 +13,7 @@ type ProductDraft = {
   name: string;
   description: string;
   imageUrl: string;
+  videoUrl: string;
   variants: VariantDraft[];
   textures: TextureDraft[];
 };
@@ -24,6 +25,7 @@ function toDraft(p: WigProduct): ProductDraft {
     name: p.name,
     description: p.description,
     imageUrl: p.imageUrl,
+    videoUrl: p.videoUrl ?? "",
     variants: p.variants.map((v) => ({
       id: v.id,
       length: v.length,
@@ -47,6 +49,7 @@ export default function WigShopEditor() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [copySource, setCopySource] = useState<Record<string, string>>({});
@@ -199,6 +202,47 @@ export default function WigShopEditor() {
     }
   }
 
+  async function handleVideoUpload(id: string, file: File) {
+    setUploadingVideo(id);
+    setError(null);
+    try {
+      if (file.size > 40 * 1024 * 1024) {
+        throw new Error("Video is too large — please keep it under 40MB.");
+      }
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("target", "wigProductVideo");
+      formData.append("productId", id);
+      const response = await fetch("/api/admin/images", { method: "POST", body: formData });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Failed to upload video.");
+      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, videoUrl: data.url } : p)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload video.");
+    } finally {
+      setUploadingVideo(null);
+    }
+  }
+
+  async function handleRemoveVideo(id: string) {
+    setUploadingVideo(id);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/images", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target: "wigProductVideo", productId: id }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? "Failed to remove video.");
+      setProducts((prev) => prev.map((p) => (p.id === id ? { ...p, videoUrl: "" } : p)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to remove video.");
+    } finally {
+      setUploadingVideo(null);
+    }
+  }
+
   async function handleSave(id: string) {
     const draft = products.find((p) => p.id === id);
     if (!draft) return;
@@ -318,7 +362,7 @@ export default function WigShopEditor() {
       {visibleProducts.map((draft) => (
         <div key={draft.id} className="space-y-3 border-t border-hairline pt-6 first:border-t-0 first:pt-0">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               {draft.imageUrl && (
                 <Image src={draft.imageUrl} alt={draft.name} width={64} height={64} className="h-16 w-16 object-cover" />
               )}
@@ -327,6 +371,25 @@ export default function WigShopEditor() {
                 disabled={uploading === draft.id}
                 onSelect={(file) => handleUpload(draft.id, file)}
               />
+              {draft.videoUrl && (
+                <video src={draft.videoUrl} className="h-16 w-16 object-cover" muted playsInline />
+              )}
+              <FileInputButton
+                label={uploadingVideo === draft.id ? "Uploading…" : draft.videoUrl ? "Replace video" : "Choose video"}
+                disabled={uploadingVideo === draft.id}
+                onSelect={(file) => handleVideoUpload(draft.id, file)}
+                accept="video/mp4,video/webm,video/quicktime"
+              />
+              {draft.videoUrl && (
+                <button
+                  type="button"
+                  disabled={uploadingVideo === draft.id}
+                  onClick={() => handleRemoveVideo(draft.id)}
+                  className="text-xs uppercase tracking-widest text-ink/40 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Remove video
+                </button>
+              )}
             </div>
             {visibleProducts.length > 1 && (
               <div className="flex items-center gap-2">

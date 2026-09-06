@@ -14,10 +14,16 @@ async function requireAdmin(request: NextRequest) {
 }
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8MB — client resizes before upload, this just guards the raw request
+const MAX_VIDEO_BYTES = 40 * 1024 * 1024; // 40MB — videos aren't resized client-side, so the cap is higher
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
+};
+const ALLOWED_VIDEO_TYPES: Record<string, string> = {
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
 };
 
 export async function GET(request: NextRequest) {
@@ -56,12 +62,17 @@ export async function POST(request: NextRequest) {
   if (!(file instanceof File) || typeof target !== "string") {
     return NextResponse.json({ error: "Missing file or target." }, { status: 400 });
   }
-  const ext = ALLOWED_TYPES[file.type];
+
+  const isVideoTarget = target === "wigProductVideo";
+  const ext = isVideoTarget ? ALLOWED_VIDEO_TYPES[file.type] : ALLOWED_TYPES[file.type];
   if (!ext) {
-    return NextResponse.json({ error: "Only JPEG, PNG, or WebP images are allowed." }, { status: 400 });
+    return NextResponse.json(
+      { error: isVideoTarget ? "Only MP4, WebM, or MOV videos are allowed." : "Only JPEG, PNG, or WebP images are allowed." },
+      { status: 400 },
+    );
   }
-  if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "Image is too large." }, { status: 400 });
+  if (file.size > (isVideoTarget ? MAX_VIDEO_BYTES : MAX_BYTES)) {
+    return NextResponse.json({ error: isVideoTarget ? "Video is too large." : "Image is too large." }, { status: 400 });
   }
 
   const id = randomUUID();
@@ -114,6 +125,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, url });
     }
 
+    if (target === "wigProductVideo") {
+      const productId = String(formData.get("productId") ?? "");
+      const productDoc = await db.collection("wigProducts").doc(productId).get();
+      if (!productDoc.exists) {
+        return NextResponse.json({ error: "Unknown product." }, { status: 400 });
+      }
+      await productDoc.ref.set({ videoUrl: url }, { merge: true });
+      return NextResponse.json({ ok: true, url });
+    }
+
     return NextResponse.json({ error: "Unknown target." }, { status: 400 });
   } catch (error) {
     console.error("Failed to upload image:", error);
@@ -126,12 +147,29 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
   }
 
-  let body: { id?: string };
+  let body: { id?: string; target?: string; productId?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
+
+  if (body.target === "wigProductVideo" && body.productId) {
+    try {
+      const db = getAdminDb();
+      const productDoc = await db.collection("wigProducts").doc(body.productId).get();
+      const videoUrl = productDoc.data()?.videoUrl;
+      await productDoc.ref.set({ videoUrl: "" }, { merge: true });
+      if (typeof videoUrl === "string" && videoUrl.includes("/uploads/wigProductVideo/")) {
+        await del(videoUrl).catch(() => {});
+      }
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      console.error("Failed to remove product video:", error);
+      return NextResponse.json({ error: "Failed to remove video." }, { status: 500 });
+    }
+  }
+
   if (!body.id) {
     return NextResponse.json({ error: "id is required." }, { status: 400 });
   }

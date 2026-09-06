@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { WigProduct } from "@/lib/wigProducts";
+import ShopPolicyInfo from "./ShopPolicyInfo";
 
 type ProductDetailProps = {
   product: WigProduct;
@@ -76,69 +77,87 @@ export default function ProductDetail({ product }: ProductDetailProps) {
   return (
     <section className="px-6 pb-24">
       <div className="mx-auto grid max-w-5xl gap-10 md:grid-cols-2">
-        <button
-          type="button"
-          onClick={() => setFullscreen(true)}
-          aria-label="View photo fullscreen"
-          className="pop-click block h-80 w-full cursor-zoom-in overflow-hidden border border-hairline sm:h-[28rem]"
-        >
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            width={900}
-            height={900}
-            className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+        {product.videoUrl ? (
+          <video
+            src={product.videoUrl}
+            poster={product.imageUrl}
+            controls
+            playsInline
+            className="h-80 w-full border border-hairline object-cover sm:h-[28rem]"
           />
-        </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setFullscreen(true)}
+            aria-label="View photo fullscreen"
+            className="pop-click block h-80 w-full cursor-zoom-in overflow-hidden border border-hairline sm:h-[28rem]"
+          >
+            <Image
+              src={product.imageUrl}
+              alt={product.name}
+              width={900}
+              height={900}
+              className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+            />
+          </button>
+        )}
 
         <div className="text-left">
           <p className="font-display text-2xl">{product.name}</p>
-          <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ink/70">{product.description}</p>
+          <p className="mt-4 whitespace-pre-line text-sm leading-loose text-ink/70">{product.description}</p>
 
-          <div className="mt-8 space-y-4">
+          <div className="mt-10 space-y-6">
             {lengths.length > 0 && (
-              <label className="block">
+              <div className="block">
                 <span className="text-xs uppercase tracking-widest text-ink/60">Length</span>
-                <select
-                  value={length}
-                  onChange={(e) => {
-                    setLength(e.target.value);
-                    setLace("");
-                  }}
-                  className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
-                >
-                  <option value="">Choose a length…</option>
+                <div className="mt-2 flex flex-wrap gap-2">
                   {lengths.map((l) => (
-                    <option key={l} value={l}>
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => {
+                        setLength(l);
+                        setLace("");
+                      }}
+                      className={`pop-click border px-3 py-2 text-xs transition-colors ${
+                        length === l
+                          ? "border-bronze bg-bronze text-cream"
+                          : "border-hairline text-ink/70 hover:border-bronze hover:text-bronze"
+                      }`}
+                    >
                       {l}
-                    </option>
+                    </button>
                   ))}
-                </select>
-              </label>
+                </div>
+              </div>
             )}
 
             {laces.length > 0 && (lengths.length === 0 || length) && (
-              <label className="block">
+              <div className="block">
                 <span className="text-xs uppercase tracking-widest text-ink/60">Lace</span>
-                <select
-                  value={lace}
-                  onChange={(e) => setLace(e.target.value)}
-                  className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
-                >
-                  <option value="">Choose a lace type…</option>
+                <div className="mt-2 flex flex-wrap gap-2">
                   {laces.map((l) => (
-                    <option key={l} value={l}>
+                    <button
+                      key={l}
+                      type="button"
+                      onClick={() => setLace(l)}
+                      className={`pop-click border px-3 py-2 text-xs transition-colors ${
+                        lace === l
+                          ? "border-bronze bg-bronze text-cream"
+                          : "border-hairline text-ink/70 hover:border-bronze hover:text-bronze"
+                      }`}
+                    >
                       {l}
-                    </option>
+                    </button>
                   ))}
-                </select>
-              </label>
+                </div>
+              </div>
             )}
 
             {matchedVariant && textures.length > 0 && (
               <div className="block">
                 <span className="text-xs uppercase tracking-widest text-ink/60">Texture</span>
-                <div className="mt-1 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {textures.map((t) => (
                     <button
                       key={t.id}
@@ -161,68 +180,85 @@ export default function ProductDetail({ product }: ProductDetailProps) {
             )}
 
             {matchedVariant && (
-              <>
-                <label className="block">
-                  <span className="text-xs uppercase tracking-widest text-ink/60">Quantity</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={50}
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.min(50, Math.max(1, Number(e.target.value) || 1)))}
-                    className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
-                  />
-                </label>
-
-                <label className="block">
-                  <span className="text-xs uppercase tracking-widest text-ink/60">Name</span>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-xs uppercase tracking-widest text-ink/60">Email</span>
-                  <input
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-xs uppercase tracking-widest text-ink/60">Phone</span>
-                  <input
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
-                  />
-                </label>
-
-                {error && <p className="text-sm text-red-700">{error}</p>}
-
-                <button
-                  type="button"
-                  disabled={
-                    !canCheckout || !customerName.trim() || !customerEmail.trim() || !customerPhone.trim() || submitting
-                  }
-                  onClick={handleCheckout}
-                  className="pop-click w-full border border-hairline py-3 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
-                >
-                  {submitting
-                    ? "Redirecting to payment…"
-                    : totalPence
-                      ? `Checkout — pay £${(totalPence / 100).toFixed(2)}`
-                      : "Checkout"}
-                </button>
-              </>
+              <div className="block">
+                <span className="text-xs uppercase tracking-widest text-ink/60">Quantity</span>
+                <div className="mt-2 flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    aria-label="Decrease quantity"
+                    className="pop-click flex h-10 w-10 items-center justify-center border border-hairline text-lg text-ink/70 transition-colors hover:border-bronze hover:text-bronze"
+                  >
+                    −
+                  </button>
+                  <span className="w-6 text-center text-sm">{quantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.min(50, q + 1))}
+                    aria-label="Increase quantity"
+                    className="pop-click flex h-10 w-10 items-center justify-center border border-hairline text-lg text-ink/70 transition-colors hover:border-bronze hover:text-bronze"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             )}
           </div>
+
+          {matchedVariant && (
+            <div className="mt-10 space-y-4 border-t border-hairline pt-8">
+              <p className="text-xs uppercase tracking-widest text-ink/50">Your Details</p>
+
+              <label className="block">
+                <span className="text-xs uppercase tracking-widest text-ink/60">Name</span>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase tracking-widest text-ink/60">Email</span>
+                <input
+                  type="email"
+                  value={customerEmail}
+                  onChange={(e) => setCustomerEmail(e.target.value)}
+                  className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs uppercase tracking-widest text-ink/60">Phone</span>
+                <input
+                  type="tel"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  className="mt-1 w-full border border-hairline bg-transparent px-3 py-2.5 text-sm"
+                />
+              </label>
+
+              {error && <p className="text-sm text-red-700">{error}</p>}
+
+              <button
+                type="button"
+                disabled={
+                  !canCheckout || !customerName.trim() || !customerEmail.trim() || !customerPhone.trim() || submitting
+                }
+                onClick={handleCheckout}
+                className="pop-click w-full border border-hairline py-3.5 text-sm uppercase tracking-widest transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-ink enabled:hover:text-cream"
+              >
+                {submitting
+                  ? "Redirecting to payment…"
+                  : totalPence
+                    ? `Checkout — pay £${(totalPence / 100).toFixed(2)}`
+                    : "Checkout"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      <ShopPolicyInfo />
 
       {fullscreen && (
         <div

@@ -172,6 +172,9 @@ export async function DELETE(request: NextRequest) {
     if (existing?.imageUrl?.includes("/uploads/wigProduct/")) {
       await del(existing.imageUrl).catch(() => {});
     }
+    if (existing?.videoUrl?.includes("/uploads/wigProductVideo/")) {
+      await del(existing.videoUrl).catch(() => {});
+    }
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("Failed to delete product:", error);

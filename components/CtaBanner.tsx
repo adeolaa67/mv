@@ -5,10 +5,10 @@ type CtaBannerProps = {
 
 export default function CtaBanner({ label, href }: CtaBannerProps) {
   return (
-    <section className="px-6 pb-16">
+    <section className="px-6 pb-20">
       <a
         href={href}
-        className="mx-auto flex max-w-2xl items-center justify-center bg-ink py-4 text-xs tracking-[0.3em] uppercase text-cream transition-opacity hover:opacity-90"
+        className="mx-auto flex max-w-3xl items-center justify-center bg-ink py-6 text-sm tracking-[0.3em] uppercase text-cream transition-opacity hover:opacity-90"
       >
         {label}
       </a>

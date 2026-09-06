@@ -62,13 +62,25 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
                 className="pop-click group block border border-hairline text-center transition-colors hover:border-bronze hover:bg-ink/5"
               >
                 <div className="h-56 w-full overflow-hidden sm:h-64 lg:h-72">
-                  <Image
-                    src={product.imageUrl}
-                    alt={product.name}
-                    width={500}
-                    height={500}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
+                  {product.videoUrl ? (
+                    <video
+                      src={product.videoUrl}
+                      poster={product.imageUrl}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      muted
+                      loop
+                      playsInline
+                      autoPlay
+                    />
+                  ) : (
+                    <Image
+                      src={product.imageUrl}
+                      alt={product.name}
+                      width={500}
+                      height={500}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  )}
                 </div>
                 <div className="px-4 py-5">
                   <p className="font-display text-base">{product.name}</p>

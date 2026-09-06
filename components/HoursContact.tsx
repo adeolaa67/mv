@@ -15,32 +15,32 @@ type HoursContactProps = {
 
 export default function HoursContact({ hours, contact }: HoursContactProps) {
   return (
-    <section className="px-6 pb-16">
-      <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
-        <div className="card-alive border border-hairline px-8 py-10 text-center">
-          <h3 className="font-script text-3xl text-bronze">Hours</h3>
-          <ul className="mt-6 space-y-4">
+    <section className="px-6 pb-20">
+      <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-2">
+        <div className="card-alive border border-hairline px-10 py-12 text-center">
+          <h3 className="font-script text-4xl text-bronze">Hours</h3>
+          <ul className="mt-8 space-y-5">
             {hours.map((row) => (
               <li key={row.label}>
-                <p className="font-display text-sm uppercase tracking-widest2">{row.label}</p>
-                <p className="text-xs uppercase tracking-widest text-ink/60">{row.time}</p>
+                <p className="font-display text-base uppercase tracking-widest2">{row.label}</p>
+                <p className="text-sm uppercase tracking-widest text-ink/60">{row.time}</p>
               </li>
             ))}
           </ul>
           <span aria-hidden className="card-alive-bar" />
         </div>
 
-        <div className="card-alive border border-hairline px-8 py-10 text-center">
-          <h3 className="font-script text-3xl text-bronze">Contact</h3>
-          <ul className="mt-6 space-y-4 text-left inline-flex flex-col mx-auto">
+        <div className="card-alive border border-hairline px-10 py-12 text-center">
+          <h3 className="font-script text-4xl text-bronze">Contact</h3>
+          <ul className="mt-8 space-y-5 text-left inline-flex flex-col mx-auto">
             {contact.map((row) => {
               const Icon = contactIcons[row.icon];
               return (
                 <li key={row.label} className="flex items-center gap-3">
-                  <Icon className="icon-float" />
+                  <Icon className="icon-float" width={20} height={20} />
                   <a
                     href={row.href}
-                    className="text-sm tracking-wide text-ink/85 hover:text-bronze transition-colors"
+                    className="text-base tracking-wide text-ink/85 hover:text-bronze transition-colors"
                   >
                     {row.label}
                   </a>
