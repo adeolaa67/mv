@@ -11,9 +11,10 @@ type ShopGridProps = {
 };
 
 type Burst = { x: number; y: number } | null;
+type FullscreenImage = { url: string; alt: string } | null;
 
 function uniqueInOrder(values: string[]) {
-  return Array.from(new Set(values));
+  return Array.from(new Set(values.filter(Boolean)));
 }
 
 export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
@@ -29,22 +30,25 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
   const [customerPhone, setCustomerPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imageFullscreen, setImageFullscreen] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<FullscreenImage>(null);
 
   const activeProduct = products.find((p) => p.id === activeId) ?? null;
 
+  // Length and lace are each optional on a product — some only vary by one
+  // of them, or by neither — so the picker for a dimension only shows up
+  // when at least one variant actually has a value for it.
   const lengths = useMemo(
     () => (activeProduct ? uniqueInOrder(activeProduct.variants.map((v) => v.length)) : []),
     [activeProduct],
   );
-  const laces = useMemo(
-    () =>
-      activeProduct
-        ? uniqueInOrder(activeProduct.variants.filter((v) => v.length === length).map((v) => v.lace))
-        : [],
-    [activeProduct, length],
+  const laces = useMemo(() => {
+    if (!activeProduct) return [];
+    const relevant = lengths.length > 0 ? activeProduct.variants.filter((v) => v.length === length) : activeProduct.variants;
+    return uniqueInOrder(relevant.map((v) => v.lace));
+  }, [activeProduct, lengths, length]);
+  const matchedVariant = activeProduct?.variants.find(
+    (v) => (lengths.length === 0 || v.length === length) && (laces.length === 0 || v.lace === lace),
   );
-  const matchedVariant = activeProduct?.variants.find((v) => v.length === length && v.lace === lace);
   const textures = activeProduct?.textures ?? [];
   const selectedTexture = textures.find((t) => t.id === textureId) ?? null;
   const needsTexture = textures.length > 0;
@@ -67,7 +71,11 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
     setCustomerName("");
     setCustomerEmail("");
     setCustomerPhone("");
-    setImageFullscreen(false);
+  }
+
+  function openFullscreen(url: string, alt: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    setFullscreenImage({ url, alt });
   }
 
   async function handleCheckout() {
@@ -132,13 +140,13 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
           {visibleProducts.map((product) => {
             const from = minPricePence(product);
             return (
-              <button
-                key={product.id}
-                type="button"
-                onClick={(e) => openProduct(product.id, e)}
-                className="pop-click border border-hairline text-center transition-colors hover:bg-ink/5"
-              >
-                <div className="h-52 w-full overflow-hidden sm:h-64">
+              <div key={product.id} className="border border-hairline text-center transition-colors hover:bg-ink/5">
+                <button
+                  type="button"
+                  onClick={(e) => openFullscreen(product.imageUrl, product.name, e)}
+                  aria-label={`View ${product.name} fullscreen`}
+                  className="pop-click block h-52 w-full cursor-zoom-in overflow-hidden sm:h-64"
+                >
                   <Image
                     src={product.imageUrl}
                     alt={product.name}
@@ -146,18 +154,24 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
                     height={400}
                     className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                   />
-                </div>
-                <div className="px-4 py-5">
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => openProduct(product.id, e)}
+                  className="pop-click block w-full px-4 py-5 text-center"
+                >
                   <p className="font-display text-sm">{product.name}</p>
-                  <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-ink/60">{product.description}</p>
+                  <p className="mt-2 line-clamp-2 whitespace-pre-line text-xs leading-relaxed text-ink/60">
+                    {product.description}
+                  </p>
                   {from != null && (
                     <p className="mt-2 text-xs uppercase tracking-widest text-ink/50">
                       From £{(from / 100).toFixed(2)}
                     </p>
                   )}
                   <span className="mt-3 inline-block text-xs uppercase tracking-widest text-bronze">See more</span>
-                </div>
-              </button>
+                </button>
+              </div>
             );
           })}
         </div>
@@ -187,7 +201,7 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
 
             <button
               type="button"
-              onClick={() => setImageFullscreen(true)}
+              onClick={(e) => openFullscreen(activeProduct.imageUrl, activeProduct.name, e)}
               aria-label="View photo fullscreen"
               className="pop-click block h-72 w-full cursor-zoom-in overflow-hidden sm:h-80"
             >
@@ -201,29 +215,33 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
             </button>
 
             <p className="mt-4 text-center font-display text-xl">{activeProduct.name}</p>
-            <p className="mt-2 text-center text-sm leading-relaxed text-ink/70">{activeProduct.description}</p>
+            <p className="mt-2 whitespace-pre-line text-center text-sm leading-relaxed text-ink/70">
+              {activeProduct.description}
+            </p>
 
             <div className="mt-6 space-y-3 text-left">
-              <label className="block">
-                <span className="text-xs uppercase tracking-widest text-ink/60">Length</span>
-                <select
-                  value={length}
-                  onChange={(e) => {
-                    setLength(e.target.value);
-                    setLace("");
-                  }}
-                  className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
-                >
-                  <option value="">Choose a length…</option>
-                  {lengths.map((l) => (
-                    <option key={l} value={l}>
-                      {l}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {lengths.length > 0 && (
+                <label className="block">
+                  <span className="text-xs uppercase tracking-widest text-ink/60">Length</span>
+                  <select
+                    value={length}
+                    onChange={(e) => {
+                      setLength(e.target.value);
+                      setLace("");
+                    }}
+                    className="mt-1 w-full border border-hairline bg-transparent px-3 py-2 text-sm"
+                  >
+                    <option value="">Choose a length…</option>
+                    {lengths.map((l) => (
+                      <option key={l} value={l}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
 
-              {length && (
+              {laces.length > 0 && (lengths.length === 0 || length) && (
                 <label className="block">
                   <span className="text-xs uppercase tracking-widest text-ink/60">Lace</span>
                   <select
@@ -333,24 +351,24 @@ export default function ShopGrid({ products, initialCategory }: ShopGridProps) {
         </div>
       )}
 
-      {imageFullscreen && activeProduct && (
+      {fullscreenImage && (
         <div
           role="dialog"
           aria-modal="true"
-          onClick={() => setImageFullscreen(false)}
+          onClick={() => setFullscreenImage(null)}
           className="fade-scale-in fixed inset-0 z-[70] flex items-center justify-center bg-ink/95 p-4"
         >
           <button
             type="button"
-            onClick={() => setImageFullscreen(false)}
+            onClick={() => setFullscreenImage(null)}
             aria-label="Close"
             className="pop-click absolute right-4 top-4 text-3xl text-cream/80 hover:text-bronze"
           >
             &times;
           </button>
           <Image
-            src={activeProduct.imageUrl}
-            alt={activeProduct.name}
+            src={fullscreenImage.url}
+            alt={fullscreenImage.alt}
             width={1200}
             height={1200}
             className="max-h-full max-w-full object-contain"

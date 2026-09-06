@@ -90,17 +90,11 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Invalid variant list." }, { status: 400 });
   }
   for (const v of variants) {
-    if (
-      typeof v.length !== "string" ||
-      !v.length.trim() ||
-      typeof v.lace !== "string" ||
-      !v.lace.trim() ||
-      typeof v.pricePence !== "number" ||
-      !Number.isFinite(v.pricePence) ||
-      v.pricePence <= 0
-    ) {
+    // Length and lace are each optional — a product may only vary by one of
+    // them, or by neither — only the price is ever mandatory.
+    if (typeof v.pricePence !== "number" || !Number.isFinite(v.pricePence) || v.pricePence <= 0) {
       return NextResponse.json(
-        { error: "Each variant needs a length, lace, and a price greater than £0." },
+        { error: "Each variant needs a price greater than £0." },
         { status: 400 },
       );
     }
@@ -127,8 +121,8 @@ export async function PUT(request: NextRequest) {
 
   const normalizedVariants: WigVariant[] = variants.map((v) => ({
     id: v.id && v.id.trim() ? v.id : randomUUID(),
-    length: v.length!.trim(),
-    lace: v.lace!.trim(),
+    length: (v.length ?? "").trim(),
+    lace: (v.lace ?? "").trim(),
     pricePence: Math.round(v.pricePence!),
   }));
 

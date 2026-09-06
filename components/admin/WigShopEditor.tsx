@@ -210,8 +210,8 @@ export default function WigShopEditor() {
     for (const v of draft.variants) {
       if (!v.length.trim() && !v.lace.trim() && !v.price.trim()) continue;
       const pounds = Number(v.price);
-      if (!v.length.trim() || !v.lace.trim() || !Number.isFinite(pounds) || pounds <= 0) {
-        setError("Each variant needs a length, lace, and a price greater than £0.");
+      if (!Number.isFinite(pounds) || pounds <= 0) {
+        setError("Each variant needs a price greater than £0.");
         return;
       }
       variants.push({ id: v.id || undefined, length: v.length.trim(), lace: v.lace.trim(), pricePence: Math.round(pounds * 100) });
@@ -300,7 +300,8 @@ export default function WigShopEditor() {
 
       <p className="text-xs uppercase tracking-widest text-ink/50">
         Add as many products as you like to {PRODUCT_CATEGORIES.find((c) => c.slug === activeCategory)?.label} —
-        each combination of length and lace has its own price. Textures (e.g. Straight, Water Wave) are listed
+        each combination of length and lace has its own price — leave length or lace blank if a product doesn&apos;t
+        need that dimension. Textures (e.g. Straight, Water Wave) are listed
         separately below and can each carry their own optional extra charge.
       </p>
 
