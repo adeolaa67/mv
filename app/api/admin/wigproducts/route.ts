@@ -105,15 +105,14 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ error: "Invalid texture list." }, { status: 400 });
   }
   for (const t of textures) {
-    if (
-      typeof t.name !== "string" ||
-      !t.name.trim() ||
-      typeof t.extraPricePence !== "number" ||
-      !Number.isFinite(t.extraPricePence) ||
-      t.extraPricePence < 0
-    ) {
+    if (typeof t.name !== "string" || !t.name.trim()) {
+      return NextResponse.json({ error: "Each texture needs a name." }, { status: 400 });
+    }
+    // The extra price is optional — a texture with no charge should be sent
+    // as 0, never required to be a positive amount.
+    if (typeof t.extraPricePence !== "number" || !Number.isFinite(t.extraPricePence) || t.extraPricePence < 0) {
       return NextResponse.json(
-        { error: "Each texture needs a name and an extra price of £0 or more." },
+        { error: `"${t.name.trim()}" has an invalid extra price.` },
         { status: 400 },
       );
     }
